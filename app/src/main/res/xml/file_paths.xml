@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Permite compartir archivos temporales de imágenes desde el directorio 'images' en la caché de la aplicación -->
+    <cache-path name="temp_images" path="images/"/>
+</paths>
