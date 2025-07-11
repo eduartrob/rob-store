@@ -5,8 +5,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,21 +53,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.livedata.observeAsState
-
 
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 
-
 import com.robstore.R
-import com.robstore.features.authentication.login.presentation.state.EmailValidationState
-import com.robstore.features.authentication.login.presentation.state.PasswordValidatioinState
+import com.robstore.core.common.EmailValidationState
+import com.robstore.core.common.GeneralUiState
+import com.robstore.core.common.PasswordValidationState
 import com.robstore.features.authentication.login.presentation.viewModel.LoginViewModel
-import com.robstore.features.Loading.LoadingOverlay
-import com.robstore.features.authentication.login.presentation.state.LoginUiState
+
 
 @Composable
 fun LoginScreen(
@@ -78,9 +72,6 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToRecoveryPasswd: () -> Unit,
 ) {
-    // Observa el estado de carga del ViewModel.
-    //val isLoading by loginViewModel.isLoading.collectAsState()
-
     // Observa los otros estados necesarios para los campos de entrada y validación.
     val email: String by loginViewModel.emailInputText.collectAsState()
     val emailValidationState by loginViewModel.emailValidationState.collectAsState()
@@ -92,7 +83,7 @@ fun LoginScreen(
 
     // Color del borde de la contraseña basado en la validación
     val passwordBorderColor by animateColorAsState(
-        targetValue = if (passwordValidatioinState is PasswordValidatioinState.Invalid) Color.Red else Color(0xFFD4D4D4),
+        targetValue = if (passwordValidatioinState is PasswordValidationState.Invalid) Color.Red else Color(0xFFD4D4D4),
         animationSpec = tween(300)
     )
 
@@ -107,7 +98,7 @@ fun LoginScreen(
 
     // Lanza la navegación a 'Home' cuando el estado sea `Success`
     LaunchedEffect(key1 = uiState) {
-        if (uiState is LoginUiState.Success) {
+        if (uiState is GeneralUiState.Success) {
             onNavigateToHome()
         }
     }
@@ -245,7 +236,7 @@ fun LoginScreen(
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         isError = passwordValidatioinState != null &&
-                                (passwordValidatioinState is PasswordValidatioinState.Invalid),
+                                (passwordValidatioinState is PasswordValidationState.Invalid),
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             val icon =
@@ -277,7 +268,7 @@ fun LoginScreen(
                     )
                     // Muestra el mensaje de error de la contraseña
                     when (passwordValidatioinState) {
-                        is PasswordValidatioinState.Invalid -> Text(
+                        is PasswordValidationState.Invalid -> Text(
                             text = "El correo o la contraseña son inválidos",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
@@ -290,7 +281,7 @@ fun LoginScreen(
                 // Botón principal de Iniciar Sesión
                 Button(
                     onClick = { loginViewModel.validateCredentials() },
-                    enabled = uiState !is LoginUiState.Loading,
+                    enabled = uiState !is GeneralUiState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(70.dp)
@@ -317,7 +308,7 @@ fun LoginScreen(
                         fontSize = 18.sp,
                         color = greenColor,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(enabled = uiState !is LoginUiState.Loading) {
+                        modifier = Modifier.clickable(enabled = uiState !is GeneralUiState.Loading) {
                             onNavigateToRecoveryPasswd()
                         }
                     )
@@ -333,7 +324,7 @@ fun LoginScreen(
                         fontSize = 18.sp,
                         color = Color(0xFF3f8b41),
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable(enabled = uiState !is LoginUiState.Loading) {
+                        modifier = Modifier.clickable(enabled = uiState !is GeneralUiState.Loading) {
                             onNavigateToRegister()
                         }
                     )
@@ -343,7 +334,7 @@ fun LoginScreen(
 
 
         AnimatedVisibility(
-            visible = uiState is LoginUiState.Loading,
+            visible = uiState is GeneralUiState.Loading,
             enter = fadeIn(animationSpec = tween(durationMillis = 300)),
             exit = fadeOut(animationSpec = tween(durationMillis = 300))
         ) {

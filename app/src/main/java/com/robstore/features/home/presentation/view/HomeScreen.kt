@@ -1,7 +1,5 @@
 package com.robstore.features.home.presentation.view
 
-import android.os.Build
-import androidx.annotation.RequiresExtension
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,31 +29,49 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.robstore.R
+import com.robstore.core.hardware.camera.data.repository.CameraManager
+import com.robstore.core.hardware.camera.domain.repository.CameraRepository
+import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
+import com.robstore.core.store.local.DataStoreManager
 import com.robstore.features.home.state.HomeScreen
 import com.robstore.features.myApps.presentation.view.MyAppsScreen
 import com.robstore.features.profile.presentation.view.ProfileScreen
 import com.robstore.features.searchApp.presentation.viewModel.SearchAppScreen
 import com.robstore.features.app.presentation.view.AppListScreen
-import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
+import com.robstore.features.profile.di.UpdateUserAppModule.updateUserUseCase
+import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
 
 
 @Composable
 fun Home(
     onNavigateToLogin: () -> Unit,
-    profileViewModel: ProfileViewModel
 ) {
     val systemUiController = rememberSystemUiController()
     val headerColor = Color(0xFFf0f3f8) // o cualquier color que uses para tu header
     var currentScreen by remember { mutableStateOf<HomeScreen>(HomeScreen.AppList) }
     var isAppListContentShowing by remember { mutableStateOf(true) }
+
+    val context = LocalContext.current
+    val dataStoreManager = remember { DataStoreManager(context) }
+    val cameraRepository: CameraRepository = CameraManager(context)
+
+
+    val cameraViewModel = remember {
+        CameraViewModel(cameraRepository, dataStoreManager)
+    }
+    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+
+
+
 
 
     SideEffect {
@@ -135,9 +151,15 @@ fun Home(
                 HomeScreen.Profile -> {
                     ProfileScreen(
                         onBack = { currentScreen = HomeScreen.AppList },
-                        profileViewModel = profileViewModel,
                         onLogout = onNavigateToLogin,
                         onUpdateSuccess = {},
+                        profileViewModel = viewModel(
+                            factory = ProfileViewModelFactory(
+                                updateUserUseCase,
+                                dataStoreManager,
+                            )
+                        ),
+                        cameraViewModel = cameraViewModel,
                     )
                 }
             }

@@ -9,3 +9,8 @@ data class UserUpdateDTO(
 data class LogoutDTO(
     val message: String
 )
+
+data class ImageResponseDTO(
+    val message: String,
+    val fileUrl: String
+)

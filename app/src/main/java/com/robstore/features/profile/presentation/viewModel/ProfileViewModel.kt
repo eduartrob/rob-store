@@ -1,35 +1,35 @@
 package com.robstore.features.profile.presentation.viewModel
 
+import android.content.Context
 import android.net.Uri
 import retrofit2.HttpException
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresExtension
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import com.robstore.core.common.EmailValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.NameValidationState
 import com.robstore.core.common.PhoneValidationState
-import com.robstore.core.hardware.domain.CameraRepository
+import com.robstore.core.hardware.camera.domain.repository.CameraRepository
 import com.robstore.core.store.local.DataStoreManager
 import com.robstore.core.store.local.PreferenceKeys
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
+import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
+
 
 class ProfileViewModel(
     private val updateUserUseCase: UpdateUserUseCase,
     private val dataStoreManager: DataStoreManager,
-    private val cameraRepository: CameraRepository
 ): ViewModel() {
+
     private val _generalUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
     val generalUiState: StateFlow<GeneralUiState> = _generalUiState.asStateFlow()
-
 
     private val _nameInputText = MutableStateFlow("")
     val nameInputText: StateFlow<String> = _nameInputText
@@ -49,22 +49,22 @@ class ProfileViewModel(
     private val _phoneValidationState = MutableStateFlow<PhoneValidationState?>(null)
     val phoneValidationState: MutableStateFlow<PhoneValidationState?> = _phoneValidationState
 
-    private val _photoUri = MutableStateFlow<Uri?>(null)
-    val photoUri = _photoUri.asStateFlow()
-
-    private var tempCameraUri: Uri? = null
-
+    private val _photoUri = MutableStateFlow<String?>(null)
+    val photoUri: StateFlow<String?> = _photoUri
 
 
     init {
         viewModelScope.launch {
-            dataStoreManager.getUserInformation().collect { userProfileLocal ->
-                _nameInputText.value = userProfileLocal.name ?: ""
-                _emailInputText.value = userProfileLocal.email ?: ""
-                _phoneInputText.value = userProfileLocal.phone ?: ""
-                _nameValidationState.value = if (userProfileLocal.name?.isNotEmpty() == true) NameValidationState.Valid else null
-                _emailValidationState.value = if (userProfileLocal.email?.isNotEmpty() == true) EmailValidationState.Valid else null
-                _phoneValidationState.value = if (userProfileLocal.phone?.isNotEmpty() == true) PhoneValidationState.Valid else null
+            dataStoreManager.getUserInformation().collectLatest { userProfile ->
+                _nameInputText.value = userProfile.name ?: ""
+                _emailInputText.value = userProfile.email ?: ""
+                _phoneInputText.value = userProfile.phone ?: ""
+            }
+        }
+
+        viewModelScope.launch {
+            dataStoreManager.getKey(PreferenceKeys.USER_PROFILE_PICTURE_URI).collectLatest { urlString ->
+                _photoUri.value = urlString // deja como String
             }
         }
     }
@@ -232,30 +232,32 @@ class ProfileViewModel(
 
 
 
-    fun prepareCameraCapture(): Uri? {
-        tempCameraUri = cameraRepository.createImageUriForCamera()
-        return tempCameraUri
+    fun onImageSelected(uri: Uri, context: Context) {
+        uploadProfilePicture(uri, context)
     }
-
-    fun onPhotoCaptured(success: Boolean) {
-        tempCameraUri?.let { uri ->
-            if (success) {
-                viewModelScope.launch {
-                    val result = cameraRepository.processCapturedPhoto(uri)
-                    if (result.isSuccess) {
-                        _photoUri.value = result.getOrNull()
-                    }
-                }
-            }
+    fun clearProfileImage() {
+        viewModelScope.launch {
+            dataStoreManager.deleteKey(PreferenceKeys.USER_PROFILE_PICTURE_URI)
+            _photoUri.value = null
         }
     }
 
-    fun onImageSelected(uri: Uri) {
-        _photoUri.value = uri
-    }
+    private fun uploadProfilePicture(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            _generalUiState.value = GeneralUiState.Loading
+            updateUserUseCase.uploadProfilePicture(uri, context).fold(
+                onSuccess = { imageProfile ->
+                    val url = imageProfile.url
+                    dataStoreManager.saveKey(PreferenceKeys.USER_PROFILE_PICTURE_URI, url)
+                    _photoUri.value = url
+                    _generalUiState.value = GeneralUiState.Success
 
-    fun clearCapturedImage(){
-        _photoUri.value = null
+                },
+                onFailure = { e ->
+                    _generalUiState.value = GeneralUiState.Error(e.message ?: "Error al subir la foto.")
+                }
+            )
+        }
     }
 
 }

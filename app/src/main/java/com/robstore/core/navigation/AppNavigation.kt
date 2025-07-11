@@ -5,14 +5,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.robstore.core.hardware.domain.CameraRepository
-import com.robstore.core.store.local.DataStoreManager
+import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
 import com.robstore.features.authentication.login.di.AppModule as LoginAppModule
 import com.robstore.features.authentication.recoveryPassword.di.AppModule as RecoveryAppModule
 import com.robstore.features.authentication.login.presentation.view.LoginScreen
@@ -30,18 +28,13 @@ import com.robstore.features.authentication.register.presentation.viewModel.Regi
 import com.robstore.features.profile.di.UpdateUserAppModule
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
-import kotlinx.coroutines.launch
 
 
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
-
-
-    val factory = remember { LoginViewModelFactory(LoginAppModule.loginUseCase, LoginAppModule.tokenRepository) }
+    val factory = remember { LoginViewModelFactory(LoginAppModule.loginUseCase, LoginAppModule.getDataStoreManager()) }
     val loginViewModel: LoginViewModel = viewModel(factory = factory)
 
     val initialDestination by loginViewModel.initialDestination.collectAsState()
@@ -55,7 +48,6 @@ fun AppNavigation(
     val profileViewModelFactory = remember { ProfileViewModelFactory(
         UpdateUserAppModule.updateUserUseCase,
         LoginAppModule.getDataStoreManager(),
-        LoginAppModule.getCameraRepository()
     )}
     val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
 
@@ -118,8 +110,7 @@ fun AppNavigation(
                         navController.navigate(NavigationRoutes.LOGIN) {
                             popUpTo(NavigationRoutes.HOME) { inclusive = true }
                         }
-                    },
-                    profileViewModel = profileViewModel,
+                    }
                 )
             }
         }

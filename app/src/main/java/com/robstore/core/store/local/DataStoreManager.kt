@@ -2,6 +2,7 @@ package com.robstore.core.store.local
 
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
@@ -17,19 +18,15 @@ class DataStoreManager(private val context: Context) {
         context.dataStore.edit { prefs -> prefs[key] = value }
     }
 
-    suspend fun getKey(token: Preferences.Key<String>): Flow<String?> {
+    fun getKey(key: Preferences.Key<String>): Flow<String?> {
         return context.dataStore.data.map { prefs ->
-            prefs[PreferenceKeys.TOKEN]
+            prefs[key]
         }
     }
 
     suspend fun deleteKey(key: Preferences.Key<String>) {
         context.dataStore.edit { prefs -> prefs.remove(key) }
     }
-
-
-
-
 
 
     fun getUserInformation(): Flow<UserProfileLocal> {
@@ -41,13 +38,20 @@ class DataStoreManager(private val context: Context) {
             )
         }
     }
-    suspend fun saveUserInformation(name: String?, email: String?, phone: String?){
-        context.dataStore.edit { prefs ->
-            name?.let { prefs[PreferenceKeys.USER_NAME] = it }
-            email?.let { prefs[PreferenceKeys.USER_EMAIL] = it }
-            phone?.let { prefs[PreferenceKeys.USER_PHONE] = it }
+    suspend fun saveUserInformation(name: String?, email: String?, phone: String?) {
+        try {
+            context.dataStore.edit { prefs ->
+                name?.let { prefs[PreferenceKeys.USER_NAME] = it }
+                email?.let { prefs[PreferenceKeys.USER_EMAIL] = it }
+                phone?.let { prefs[PreferenceKeys.USER_PHONE] = it }
+            }
+            Log.d("DataStoreManager", "Información de usuario guardada.")
+        } catch (e: Exception) {
+            Log.e("DataStoreManager", "Error al guardar información de usuario: ${e.message}", e)
         }
     }
+
+
 
 
 

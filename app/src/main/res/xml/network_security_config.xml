@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+    <!-- Permite tráfico HTTP a IPs específicas para desarrollo -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">192.168.0.27</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Para emuladores de Android Studio -->
+        <!-- Si usas otras IPs locales, añádelas aquí -->
+    </domain-config>
+    <!-- Opcional: Para permitir todo el tráfico cleartext (NO RECOMENDADO PARA PRODUCCIÓN) -->
+    <!-- <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config> -->
+</network-security-config>

@@ -1,8 +1,8 @@
 package com.robstore.features.authentication.login.di
 
 import android.content.Context
-import com.robstore.core.hardware.data.CameraManager
-import com.robstore.core.hardware.domain.CameraRepository
+import com.robstore.core.hardware.camera.data.repository.CameraManager
+import com.robstore.core.hardware.camera.domain.repository.CameraRepository
 import com.robstore.features.authentication.login.data.repository.LoginRepositoryImpl
 import com.robstore.features.authentication.login.data.repository.TokenRepositoryImpl
 import com.robstore.features.authentication.login.domain.repository.LoginRepository
