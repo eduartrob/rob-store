@@ -1,5 +1,10 @@
 package com.robstore.features.home.presentation.view
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.robstore.R
@@ -47,13 +54,17 @@ import com.robstore.features.myApps.presentation.view.MyAppsScreen
 import com.robstore.features.profile.presentation.view.ProfileScreen
 import com.robstore.features.searchApp.presentation.viewModel.SearchAppScreen
 import com.robstore.features.app.presentation.view.AppListScreen
+import com.robstore.features.home.presentation.viewModel.HomeViewModel
 import com.robstore.features.profile.di.UpdateUserAppModule.updateUserUseCase
+import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
 
 
 @Composable
 fun Home(
     onNavigateToLogin: () -> Unit,
+    homeViewModel: HomeViewModel,
+    profileViewModel: ProfileViewModel
 ) {
     val systemUiController = rememberSystemUiController()
     val headerColor = Color(0xFFf0f3f8) // o cualquier color que uses para tu header
@@ -61,6 +72,7 @@ fun Home(
     var isAppListContentShowing by remember { mutableStateOf(true) }
 
     val context = LocalContext.current
+
     val dataStoreManager = remember { DataStoreManager(context) }
     val cameraRepository: CameraRepository = CameraManager(context)
 
@@ -70,6 +82,28 @@ fun Home(
     }
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
 
+
+
+
+    val locationPermission = Manifest.permission.ACCESS_FINE_LOCATION
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            homeViewModel.requestAndSaveCountry()
+        } else {
+            Toast.makeText(context, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val granted = ContextCompat.checkSelfPermission(context, locationPermission) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            homeViewModel.requestAndSaveCountry()
+        } else {
+            permissionLauncher.launch(locationPermission)
+        }
+    }
 
 
 
@@ -153,12 +187,7 @@ fun Home(
                         onBack = { currentScreen = HomeScreen.AppList },
                         onLogout = onNavigateToLogin,
                         onUpdateSuccess = {},
-                        profileViewModel = viewModel(
-                            factory = ProfileViewModelFactory(
-                                updateUserUseCase,
-                                dataStoreManager,
-                            )
-                        ),
+                        profileViewModel = profileViewModel,
                         cameraViewModel = cameraViewModel,
                     )
                 }

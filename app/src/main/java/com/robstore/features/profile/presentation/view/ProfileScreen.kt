@@ -1,5 +1,12 @@
 package com.robstore.features.profile.presentation.view
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.pm.PackageManager
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -75,7 +82,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 
-
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit,
@@ -95,9 +101,14 @@ fun ProfileScreen(
     val phoneValidationState by profileViewModel.phoneValidationState.collectAsState()
     val generalUiState by profileViewModel.generalUiState.collectAsState()
     val capturedImageUri by profileViewModel.photoUri.collectAsState()
+    val region: String by profileViewModel.regionInputText.collectAsState()
+
+    val fineLocationPermission = Manifest.permission.ACCESS_FINE_LOCATION
+    val coarseLocationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
 
 
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+    var showLocationPermissionRationale by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
 
@@ -110,7 +121,6 @@ fun ProfileScreen(
             else -> {}
         }
     }
-
 
     val cameraLauncher = CameraLauncherManager(
         cameraViewModel = cameraViewModel,
@@ -127,7 +137,6 @@ fun ProfileScreen(
             profileViewModel.onImageSelected(it, context) // aquí ya lo pasas
         }
     }
-
 
     Column(
         modifier = Modifier
@@ -404,6 +413,45 @@ fun ProfileScreen(
                     )
                     else -> {}
                 }
+
+                Text(
+                    text = "Región",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF525252),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    textAlign = TextAlign.Center
+                )
+                OutlinedTextField(
+                    value = region,
+                    onValueChange = { /* No permitir cambios si es de solo lectura */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
+                    readOnly = true, // ¡CAMBIO AQUÍ! Ahora es de solo lectura
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFd3d3d3),
+                        focusedContainerColor = Color.Transparent,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        disabledTextColor = Color.Black, // Color para texto deshabilitado
+                        cursorColor = Color.Black,
+                        focusedLabelColor = Color.Gray,
+                        unfocusedLabelColor = Color.Gray,
+                        disabledLabelColor = Color.Gray,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    )
+                )
+
+
+
                 Button(
                     onClick = { profileViewModel.updateCredentials() },
                     modifier = Modifier

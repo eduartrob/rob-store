@@ -11,6 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
+import com.robstore.core.hardware.location.domain.repository.LocationRepository
+import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
 import com.robstore.features.authentication.login.di.AppModule as LoginAppModule
 import com.robstore.features.authentication.recoveryPassword.di.AppModule as RecoveryAppModule
 import com.robstore.features.authentication.login.presentation.view.LoginScreen
@@ -25,6 +27,8 @@ import com.robstore.features.authentication.recoveryPassword.presentation.viewMo
 import com.robstore.features.authentication.register.di.RegisterAppModule
 import com.robstore.features.authentication.register.presentation.viewModel.RegisterViewModel
 import com.robstore.features.authentication.register.presentation.viewModel.RegisterViewModelFactory
+import com.robstore.features.home.presentation.viewModel.HomeViewModel
+import com.robstore.features.home.presentation.viewModel.HomeViewModelFactory
 import com.robstore.features.profile.di.UpdateUserAppModule
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
@@ -44,6 +48,20 @@ fun AppNavigation(
 
     val recoveryViewModelFactory = remember { RecoveryViewModelFactory(RecoveryAppModule.recoveryUseCase) }
     val recoveryPasswdViewModel: RecoveryPasswdViewModel = viewModel(factory = recoveryViewModelFactory)
+
+
+
+    val homeViewModelFactory = remember {
+        HomeViewModelFactory(
+            LoginAppModule.getLocationUseCase(),
+            LoginAppModule.getDataStoreManager()
+        )
+    }
+    val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
+
+
+
+
 
     val profileViewModelFactory = remember { ProfileViewModelFactory(
         UpdateUserAppModule.updateUserUseCase,
@@ -110,7 +128,9 @@ fun AppNavigation(
                         navController.navigate(NavigationRoutes.LOGIN) {
                             popUpTo(NavigationRoutes.HOME) { inclusive = true }
                         }
-                    }
+                    },
+                    homeViewModel = homeViewModel,
+                    profileViewModel = profileViewModel,
                 )
             }
         }

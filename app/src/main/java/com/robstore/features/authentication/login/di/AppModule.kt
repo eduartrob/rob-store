@@ -3,6 +3,9 @@ package com.robstore.features.authentication.login.di
 import android.content.Context
 import com.robstore.core.hardware.camera.data.repository.CameraManager
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
+import com.robstore.core.hardware.location.data.repository.LocationManager
+import com.robstore.core.hardware.location.domain.repository.LocationRepository
+import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
 import com.robstore.features.authentication.login.data.repository.LoginRepositoryImpl
 import com.robstore.features.authentication.login.data.repository.TokenRepositoryImpl
 import com.robstore.features.authentication.login.domain.repository.LoginRepository
@@ -22,6 +25,9 @@ object AppModule {
 
     private lateinit var cameraRepositoryInstance: CameraRepository
 
+    private lateinit var locationRepositoryInstance: LocationRepository
+    private lateinit var locationUseCaseInstance: LocationUseCase
+
     private var isInitialized = false
 
     fun init(context: Context) {
@@ -30,6 +36,9 @@ object AppModule {
             tokenRepositoryImplInstance = TokenRepositoryImpl(dataStoreManagerInstance)
 
             cameraRepositoryInstance = CameraManager(context.applicationContext)
+
+            locationRepositoryInstance = LocationManager(context.applicationContext)
+            locationUseCaseInstance = LocationUseCase(locationRepositoryInstance)
 
             val allInterceptors = listOf(
                 TokenCaptureInterceptor(dataStoreManagerInstance),
@@ -73,5 +82,10 @@ object AppModule {
     fun getCameraRepository(): CameraRepository {
         check(::cameraRepositoryInstance.isInitialized) { "CameraRepository no ha sido inicializado. Llama a AppModule.init() primero." }
         return cameraRepositoryInstance
+    }
+
+    fun getLocationUseCase(): LocationUseCase {
+        check(::locationUseCaseInstance.isInitialized) { "LocationUseCase no ha sido inicializado. Llama a UpdateUserAppModule.init() primero." }
+        return locationUseCaseInstance
     }
 }

@@ -2,15 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- PERMISOS DE CÁMARA Y ALMACENAMIENTO (FUERA DE <application>) -->
+
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- Para leer imágenes de la galería en Android 12 (API 31) y anteriores -->
+    <!-- Android 12 (API 31) y anteriores -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <!-- Para leer imágenes de la galería en Android 13 (API 33) y posteriores -->
+    <!-- Android 13 (API 33) y posteriores -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <!-- Permiso de Internet (ya lo tienes, lo mantengo) -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- PERMISOS DE LOCATIONS -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
@@ -26,11 +30,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RobStore"
         tools:targetApi="31">
-
-
-<!--        android:networkSecurityConfig="@xml/network_security_config"-->
-
-
 
 
 

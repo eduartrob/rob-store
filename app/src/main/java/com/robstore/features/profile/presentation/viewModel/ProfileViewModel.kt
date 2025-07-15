@@ -20,7 +20,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
+import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
 
 
 class ProfileViewModel(
@@ -52,6 +54,8 @@ class ProfileViewModel(
     private val _photoUri = MutableStateFlow<String?>(null)
     val photoUri: StateFlow<String?> = _photoUri
 
+    private val _regionInputText = MutableStateFlow("") // ¡NUEVO! Estado para la región
+    val regionInputText: StateFlow<String> = _regionInputText.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -59,6 +63,12 @@ class ProfileViewModel(
                 _nameInputText.value = userProfile.name ?: ""
                 _emailInputText.value = userProfile.email ?: ""
                 _phoneInputText.value = userProfile.phone ?: ""
+            }
+        }
+
+        viewModelScope.launch {
+            dataStoreManager.getKey(PreferenceKeys.USER_REGION).collectLatest { region ->
+                _regionInputText.value = region.toString()
             }
         }
 
@@ -259,5 +269,22 @@ class ProfileViewModel(
             )
         }
     }
+
+//    fun requestLocationAndSetRegion(context: Context) {
+//        viewModelScope.launch {
+//            _generalUiState.value = GeneralUiState.Loading
+//            val result = locationUseCase() // Llama al caso de uso de ubicación
+//            result.onSuccess { region ->
+//                _regionInputText.value = region // Actualiza el StateFlow de la región
+//                dataStoreManager.saveKey(PreferenceKeys.USER_REGION, region)
+//                _generalUiState.value = GeneralUiState.Success
+//                Log.d("ProfileViewModel", "Región obtenida y establecida: $region")
+//            }.onFailure { exception ->
+//                val errorMessage = "Error al obtener la región: ${exception.message ?: "Desconocido"}"
+//                _generalUiState.value = GeneralUiState.Error(errorMessage)
+//                Log.e("ProfileViewModel", errorMessage, exception)
+//            }
+//        }
+//    }
 
 }
