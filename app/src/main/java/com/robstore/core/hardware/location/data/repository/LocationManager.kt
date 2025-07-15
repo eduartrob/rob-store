@@ -46,11 +46,6 @@ class LocationManager(private val context: Context) : LocationRepository {
             }
     }
 
-    /**
-     * Obtiene el nombre de la región (ciudad/estado) a partir de un objeto Location.
-     * @param location El objeto Location.
-     * @return Result.success(String) con el nombre de la región, o Result.failure(Exception) si falla.
-     */
     override suspend fun getRegionFromLocation(location: Location): Result<String> {
         return try {
             val geocoder = Geocoder(context, Locale.getDefault())
@@ -70,7 +65,7 @@ class LocationManager(private val context: Context) : LocationRepository {
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0]
                 // Prioriza la ciudad, luego el sub-admin, luego el admin (estado/provincia)
-                val region = address.locality ?: address.subAdminArea ?: address.adminArea
+                val region = address.countryName
                 Log.d("LocationManager", "Región obtenida: $region")
                 Result.success(region ?: "Región Desconocida")
             } else {
