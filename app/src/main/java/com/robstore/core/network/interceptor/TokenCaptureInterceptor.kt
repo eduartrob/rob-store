@@ -1,7 +1,7 @@
 package com.robstore.core.network.interceptor
 
-import com.robstore.core.store.local.DataStoreManager
-import com.robstore.core.store.local.PreferenceKeys
+import com.robstore.core.store.local.dataStore.DataStoreManager
+import com.robstore.core.store.local.dataStore.PreferenceKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -27,6 +27,7 @@ import com.robstore.features.authentication.recoveryPassword.presentation.viewMo
 import com.robstore.features.authentication.register.di.RegisterAppModule
 import com.robstore.features.authentication.register.presentation.viewModel.RegisterViewModel
 import com.robstore.features.authentication.register.presentation.viewModel.RegisterViewModelFactory
+import com.robstore.features.home.di.HomeAppModul
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
 import com.robstore.features.home.presentation.viewModel.HomeViewModelFactory
 import com.robstore.features.profile.di.UpdateUserAppModule
@@ -54,7 +55,9 @@ fun AppNavigation(
     val homeViewModelFactory = remember {
         HomeViewModelFactory(
             LoginAppModule.getLocationUseCase(),
-            LoginAppModule.getDataStoreManager()
+            LoginAppModule.getDataStoreManager(),
+            homeUseCase = HomeAppModul.HomeAppModule.getHomeUseCase(),
+            LoginAppModule.getInternetConnectivityUseCase()
         )
     }
     val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)

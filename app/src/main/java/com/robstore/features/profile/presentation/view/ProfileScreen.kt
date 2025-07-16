@@ -103,12 +103,9 @@ fun ProfileScreen(
     val capturedImageUri by profileViewModel.photoUri.collectAsState()
     val region: String by profileViewModel.regionInputText.collectAsState()
 
-    val fineLocationPermission = Manifest.permission.ACCESS_FINE_LOCATION
-    val coarseLocationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
 
 
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
-    var showLocationPermissionRationale by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
 

@@ -1,13 +1,12 @@
 // En RetrofitHelper.kt
 package com.robstore.core.network
 
-import com.robstore.core.network.interceptor.AddTokenInterceptor
-import com.robstore.core.network.interceptor.TokenCaptureInterceptor
-import com.robstore.core.network.interceptor.provideLoggingInterceptor
-import com.robstore.core.store.local.DataStoreManager
+import com.robstore.core.hardware.internet.data.InternetConnectivityManager
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.authentication.login.data.datasource.LoginService
 import com.robstore.features.authentication.recoveryPassword.data.datasource.RecoveryService
 import com.robstore.features.authentication.register.data.datasource.RegisterService
+import com.robstore.features.home.data.datasource.HomeService
 import com.robstore.features.profile.data.datasource.ProfileService
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -69,6 +68,10 @@ object RetrofitHelper {
 
     fun getProfileService(): ProfileService {
         return getService((ProfileService::class.java))
+    }
+
+    fun getHomeService(): HomeService {
+        return getService((HomeService::class.java))
     }
 
 }

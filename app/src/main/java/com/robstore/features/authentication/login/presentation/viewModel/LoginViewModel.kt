@@ -9,8 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.robstore.core.common.EmailValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
-import com.robstore.core.store.local.DataStoreManager
-import com.robstore.features.authentication.login.di.AppModule.loginUseCase
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.authentication.login.di.AppModule.tokenRepository
 import com.robstore.features.authentication.login.domain.useCase.LoginUseCase
 import kotlinx.coroutines.flow.MutableStateFlow

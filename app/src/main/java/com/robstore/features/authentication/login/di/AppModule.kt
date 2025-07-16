@@ -3,6 +3,9 @@ package com.robstore.features.authentication.login.di
 import android.content.Context
 import com.robstore.core.hardware.camera.data.repository.CameraManager
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
+import com.robstore.core.hardware.internet.data.InternetConnectivityManager
+import com.robstore.core.hardware.internet.domain.repository.InternetConnectivityRepository
+import com.robstore.core.hardware.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.core.hardware.location.data.repository.LocationManager
 import com.robstore.core.hardware.location.domain.repository.LocationRepository
 import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
@@ -15,7 +18,7 @@ import com.robstore.core.network.RetrofitHelper
 import com.robstore.core.network.interceptor.AddTokenInterceptor
 import com.robstore.core.network.interceptor.TokenCaptureInterceptor
 import com.robstore.core.network.interceptor.provideLoggingInterceptor
-import com.robstore.core.store.local.DataStoreManager
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.authentication.login.data.datasource.LoginService
 
 
@@ -28,6 +31,9 @@ object AppModule {
     private lateinit var locationRepositoryInstance: LocationRepository
     private lateinit var locationUseCaseInstance: LocationUseCase
 
+    private lateinit var internetConnectivityRepositoryInstance: InternetConnectivityRepository
+    private lateinit var internetConnectivityUseCaseInstance: InternetConnectivityUseCase
+
     private var isInitialized = false
 
     fun init(context: Context) {
@@ -39,6 +45,9 @@ object AppModule {
 
             locationRepositoryInstance = LocationManager(context.applicationContext)
             locationUseCaseInstance = LocationUseCase(locationRepositoryInstance)
+
+            internetConnectivityRepositoryInstance = InternetConnectivityManager(context.applicationContext)
+            internetConnectivityUseCaseInstance = InternetConnectivityUseCase(internetConnectivityRepositoryInstance)
 
             val allInterceptors = listOf(
                 TokenCaptureInterceptor(dataStoreManagerInstance),
@@ -87,5 +96,10 @@ object AppModule {
     fun getLocationUseCase(): LocationUseCase {
         check(::locationUseCaseInstance.isInitialized) { "LocationUseCase no ha sido inicializado. Llama a UpdateUserAppModule.init() primero." }
         return locationUseCaseInstance
+    }
+
+    fun getInternetConnectivityUseCase(): InternetConnectivityUseCase {
+        check(::internetConnectivityUseCaseInstance.isInitialized) { "InternetConnectivityUseCase no ha sido inicializado. Llama a AppModule.init() primero." }
+        return internetConnectivityUseCaseInstance
     }
 }

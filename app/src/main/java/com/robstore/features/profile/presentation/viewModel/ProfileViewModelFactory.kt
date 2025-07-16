@@ -2,10 +2,7 @@ package com.robstore.features.profile.presentation.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.robstore.core.hardware.camera.domain.repository.CameraRepository
-import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
-import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
-import com.robstore.core.store.local.DataStoreManager
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 
 class ProfileViewModelFactory(

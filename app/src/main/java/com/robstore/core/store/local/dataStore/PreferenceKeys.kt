@@ -1,4 +1,4 @@
-package com.robstore.core.store.local
+package com.robstore.core.store.local.dataStore
 
 import androidx.datastore.preferences.core.stringPreferencesKey
 

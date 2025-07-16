@@ -1,7 +1,7 @@
 package com.robstore.features.authentication.login.presentation.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.robstore.core.store.local.DataStoreManager
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.authentication.login.domain.useCase.LoginUseCase
 
 

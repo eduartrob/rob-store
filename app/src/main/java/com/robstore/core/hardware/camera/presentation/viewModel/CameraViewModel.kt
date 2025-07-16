@@ -3,8 +3,8 @@ package com.robstore.core.hardware.camera.presentation.viewModel
 import android.content.Context
 import android.net.Uri
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
-import com.robstore.core.store.local.DataStoreManager
-import com.robstore.core.store.local.PreferenceKeys
+import com.robstore.core.store.local.dataStore.DataStoreManager
+import com.robstore.core.store.local.dataStore.PreferenceKeys
 
 class CameraViewModel(
     private val cameraRepository: CameraRepository,

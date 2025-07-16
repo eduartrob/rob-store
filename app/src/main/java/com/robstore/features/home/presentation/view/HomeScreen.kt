@@ -2,6 +2,7 @@ package com.robstore.features.home.presentation.view
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,22 +43,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.robstore.R
 import com.robstore.core.hardware.camera.data.repository.CameraManager
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
 import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
-import com.robstore.core.store.local.DataStoreManager
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.home.state.HomeScreen
 import com.robstore.features.myApps.presentation.view.MyAppsScreen
 import com.robstore.features.profile.presentation.view.ProfileScreen
 import com.robstore.features.searchApp.presentation.viewModel.SearchAppScreen
 import com.robstore.features.app.presentation.view.AppListScreen
+import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
-import com.robstore.features.profile.di.UpdateUserAppModule.updateUserUseCase
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
-import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
+import kotlinx.coroutines.flow.collectLatest
 
 
 @Composable
@@ -82,6 +82,8 @@ fun Home(
     }
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
 
+    val wifiConnectivityUseCase = remember { AppModule.getInternetConnectivityUseCase() }
+
 
 
 
@@ -97,11 +99,26 @@ fun Home(
     }
 
     LaunchedEffect(Unit) {
+        homeViewModel.fetchProfileImage()
         val granted = ContextCompat.checkSelfPermission(context, locationPermission) == PackageManager.PERMISSION_GRANTED
         if (granted) {
             homeViewModel.requestAndSaveCountry()
         } else {
             permissionLauncher.launch(locationPermission)
+        }
+    }
+
+    LaunchedEffect(wifiConnectivityUseCase) {
+        wifiConnectivityUseCase.observeConnectivity().collectLatest { isConnectedToInternet ->
+            if (isConnectedToInternet) {
+                Log.d("Home", "¡Hay conexión a Internet!")
+                // Aquí podrías actualizar un estado en un ViewModel si necesitas mostrar esto en la UI
+                //Toast.makeText(context, "Conexión a Internet restaurada.", Toast.LENGTH_SHORT).show()
+            } else {
+                Log.d("Home", "No hay conexión a Internet.")
+                // Aquí podrías mostrar un Toast o un diálogo al usuario
+                Toast.makeText(context, "No hay conexión a Internet. Algunas funciones pueden no estar disponibles.", Toast.LENGTH_LONG).show()
+            }
         }
     }
 

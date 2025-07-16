@@ -10,19 +10,14 @@ import com.robstore.core.common.EmailValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.NameValidationState
 import com.robstore.core.common.PhoneValidationState
-import com.robstore.core.hardware.camera.domain.repository.CameraRepository
-import com.robstore.core.store.local.DataStoreManager
-import com.robstore.core.store.local.PreferenceKeys
+import com.robstore.core.store.local.dataStore.DataStoreManager
+import com.robstore.core.store.local.dataStore.PreferenceKeys
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
-import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
 
 
 class ProfileViewModel(
@@ -269,22 +264,5 @@ class ProfileViewModel(
             )
         }
     }
-
-//    fun requestLocationAndSetRegion(context: Context) {
-//        viewModelScope.launch {
-//            _generalUiState.value = GeneralUiState.Loading
-//            val result = locationUseCase() // Llama al caso de uso de ubicación
-//            result.onSuccess { region ->
-//                _regionInputText.value = region // Actualiza el StateFlow de la región
-//                dataStoreManager.saveKey(PreferenceKeys.USER_REGION, region)
-//                _generalUiState.value = GeneralUiState.Success
-//                Log.d("ProfileViewModel", "Región obtenida y establecida: $region")
-//            }.onFailure { exception ->
-//                val errorMessage = "Error al obtener la región: ${exception.message ?: "Desconocido"}"
-//                _generalUiState.value = GeneralUiState.Error(errorMessage)
-//                Log.e("ProfileViewModel", errorMessage, exception)
-//            }
-//        }
-//    }
 
 }
