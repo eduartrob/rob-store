@@ -1,6 +1,6 @@
-package com.robstore.core.hardware.internet.domain.useCase
+package com.robstore.core.sync.internet.domain.useCase
 
-import com.robstore.core.hardware.internet.domain.repository.InternetConnectivityRepository
+import com.robstore.core.sync.internet.domain.repository.InternetConnectivityRepository
 import kotlinx.coroutines.flow.Flow
 
 class InternetConnectivityUseCase(

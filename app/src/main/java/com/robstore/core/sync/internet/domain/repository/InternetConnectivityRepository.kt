@@ -1,4 +1,4 @@
-package com.robstore.core.hardware.internet.domain.repository
+package com.robstore.core.sync.internet.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 

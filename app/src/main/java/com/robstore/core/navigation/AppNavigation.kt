@@ -56,8 +56,7 @@ fun AppNavigation(
         HomeViewModelFactory(
             LoginAppModule.getLocationUseCase(),
             LoginAppModule.getDataStoreManager(),
-            homeUseCase = HomeAppModul.HomeAppModule.getHomeUseCase(),
-            LoginAppModule.getInternetConnectivityUseCase()
+            homeUseCase = HomeAppModul.HomeAppModule.getHomeUseCase()
         )
     }
     val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
@@ -69,6 +68,9 @@ fun AppNavigation(
     val profileViewModelFactory = remember { ProfileViewModelFactory(
         UpdateUserAppModule.updateUserUseCase,
         LoginAppModule.getDataStoreManager(),
+        LoginAppModule.getUserRepository(),
+        LoginAppModule.getInternetConnectivityUseCase()
+
     )}
     val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
 

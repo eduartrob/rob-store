@@ -1,6 +1,5 @@
 pluginManagement {
     repositories {
-        // No pongas filtros aquí para no bloquear KSP ni otros plugins
         gradlePluginPortal()
         google()
         mavenCentral()

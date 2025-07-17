@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
+    alias(libs.plugins.kotlin.ksp)
 }
 
 android {
@@ -48,20 +49,15 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-
     implementation(libs.ui)
-
     implementation(libs.accompanist.systemuicontroller)
-
 
     // Material
     implementation(libs.material3)
     implementation(libs.androidx.material.icons.extended)
 
-    // Navigation Compose (la librería que falta)
+    // Navigation Compose
     implementation(libs.androidx.navigation.compose)
-
-
 
     // ViewModel y Lifecycle
     implementation(libs.lifecycle.viewmodel.ktx)
@@ -71,7 +67,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Retrofi
+    // Retrofit
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
@@ -81,7 +77,20 @@ dependencies {
     implementation(libs.play.services.cast.framework)
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.datastore.preferences.core)
+    implementation(libs.androidx.datastore.preferences.v111) // Se podría simplificar
 
+    // Corrutinas y networking
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.logging.interceptor)
+
+    // Camera
+    implementation(libs.coil.compose)
+
+    // --- DEPENDENCIAS DE ROOM ---
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Tests
     testImplementation(libs.junit)
@@ -93,23 +102,4 @@ dependencies {
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    //token
-    implementation(libs.androidx.datastore.preferences.core)
-    implementation(libs.androidx.datastore.preferences.v111)
-    implementation(libs.kotlinx.coroutines.android)
-
-    //http
-    implementation(libs.logging.interceptor)
-
-
-    //camera
-    implementation(libs.coil.compose)
-
-
-    //room
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    
-
 }

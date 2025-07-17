@@ -67,7 +67,7 @@ fun Home(
     profileViewModel: ProfileViewModel
 ) {
     val systemUiController = rememberSystemUiController()
-    val headerColor = Color(0xFFf0f3f8) // o cualquier color que uses para tu header
+    val headerColor = Color(0xFFf0f3f8)
     var currentScreen by remember { mutableStateOf<HomeScreen>(HomeScreen.AppList) }
     var isAppListContentShowing by remember { mutableStateOf(true) }
 
@@ -76,13 +76,12 @@ fun Home(
     val dataStoreManager = remember { DataStoreManager(context) }
     val cameraRepository: CameraRepository = CameraManager(context)
 
-
     val cameraViewModel = remember {
         CameraViewModel(cameraRepository, dataStoreManager)
     }
-    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
 
     val wifiConnectivityUseCase = remember { AppModule.getInternetConnectivityUseCase() }
+
 
 
 
@@ -99,7 +98,6 @@ fun Home(
     }
 
     LaunchedEffect(Unit) {
-        homeViewModel.fetchProfileImage()
         val granted = ContextCompat.checkSelfPermission(context, locationPermission) == PackageManager.PERMISSION_GRANTED
         if (granted) {
             homeViewModel.requestAndSaveCountry()
@@ -108,21 +106,27 @@ fun Home(
         }
     }
 
+    var isFetched by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(Unit) {
+        if (!isFetched) {
+            homeViewModel.fetchProfileImage()
+            isFetched = true
+        }
+    }
+
     LaunchedEffect(wifiConnectivityUseCase) {
         wifiConnectivityUseCase.observeConnectivity().collectLatest { isConnectedToInternet ->
             if (isConnectedToInternet) {
                 Log.d("Home", "¡Hay conexión a Internet!")
-                // Aquí podrías actualizar un estado en un ViewModel si necesitas mostrar esto en la UI
                 //Toast.makeText(context, "Conexión a Internet restaurada.", Toast.LENGTH_SHORT).show()
             } else {
                 Log.d("Home", "No hay conexión a Internet.")
-                // Aquí podrías mostrar un Toast o un diálogo al usuario
                 Toast.makeText(context, "No hay conexión a Internet. Algunas funciones pueden no estar disponibles.", Toast.LENGTH_LONG).show()
             }
         }
     }
-
-
 
 
     SideEffect {

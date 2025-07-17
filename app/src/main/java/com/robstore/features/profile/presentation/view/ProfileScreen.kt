@@ -450,7 +450,11 @@ fun ProfileScreen(
 
 
                 Button(
-                    onClick = { profileViewModel.updateCredentials() },
+                    onClick = {
+                        coroutineScope.launch {
+                            profileViewModel.updateCredentials()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

@@ -1,7 +1,7 @@
 // En RetrofitHelper.kt
 package com.robstore.core.network
 
-import com.robstore.core.hardware.internet.data.InternetConnectivityManager
+import com.robstore.core.sync.internet.data.InternetConnectivityManager
 import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.authentication.login.data.datasource.LoginService
 import com.robstore.features.authentication.recoveryPassword.data.datasource.RecoveryService

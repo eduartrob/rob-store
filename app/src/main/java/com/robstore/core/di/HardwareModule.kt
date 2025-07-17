@@ -3,9 +3,9 @@ package com.robstore.core.di
 import com.robstore.core.appcontext.AppContextHolder
 import com.robstore.core.hardware.camera.data.repository.CameraManager
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
-import com.robstore.core.hardware.internet.data.InternetConnectivityManager
-import com.robstore.core.hardware.internet.domain.repository.InternetConnectivityRepository
-import com.robstore.core.hardware.internet.domain.useCase.InternetConnectivityUseCase
+import com.robstore.core.sync.internet.data.InternetConnectivityManager
+import com.robstore.core.sync.internet.domain.repository.InternetConnectivityRepository
+import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.core.network.RetrofitHelper
 
 object HardwareModule {

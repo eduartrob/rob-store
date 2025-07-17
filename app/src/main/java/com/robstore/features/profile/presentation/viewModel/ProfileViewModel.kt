@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import retrofit2.HttpException
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.robstore.core.common.EmailValidationState
@@ -12,17 +14,26 @@ import com.robstore.core.common.NameValidationState
 import com.robstore.core.common.PhoneValidationState
 import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.core.store.local.dataStore.PreferenceKeys
+import com.robstore.core.store.local.database.dao.UserDao
+import com.robstore.core.store.local.database.entities.UserEntity
+import com.robstore.core.store.local.database.repository.UserRepository
+import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
+import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 
 class ProfileViewModel(
     private val updateUserUseCase: UpdateUserUseCase,
     private val dataStoreManager: DataStoreManager,
+    private val userRepository: UserRepository,
+    private val internetConnectivityUseCase: InternetConnectivityUseCase
 ): ViewModel() {
 
     private val _generalUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
@@ -52,6 +63,8 @@ class ProfileViewModel(
     private val _regionInputText = MutableStateFlow("") // ¡NUEVO! Estado para la región
     val regionInputText: StateFlow<String> = _regionInputText.asStateFlow()
 
+
+
     init {
         viewModelScope.launch {
             dataStoreManager.getUserInformation().collectLatest { userProfile ->
@@ -72,6 +85,8 @@ class ProfileViewModel(
                 _photoUri.value = urlString // deja como String
             }
         }
+
+
     }
 
 
@@ -148,7 +163,7 @@ class ProfileViewModel(
         }
     }
 
-    fun updateCredentials(){
+    suspend fun updateCredentials(){
         val name = _nameInputText.value
         val email = _emailInputText.value
         val phone = _phoneInputText.value
@@ -166,8 +181,10 @@ class ProfileViewModel(
             return
         }
 
+        val isConnected = internetConnectivityUseCase.observeConnectivity().first()
 
-        viewModelScope.launch {
+        if (isConnected) {
+            Log.d("Home", "¡Hay conexión a Internet!")
             _generalUiState.value = GeneralUiState.Loading
             val result = updateUserUseCase(name, email, phone)
 
@@ -184,56 +201,77 @@ class ProfileViewModel(
                 _generalUiState.value = GeneralUiState.Error(errorMessage)
                 Log.e("ProfileViewModel", "Error al actualizar perfil: $errorMessage", exception)
             }
+        } else {
+            Log.d("Home", "No hay conexión a Internet.")
+
+            val newUserId = UUID.randomUUID().toString()
+            val newUser = UserEntity(
+                id = newUserId,
+                name = name,
+                email = email,
+                phone = phone
+            )
+            userRepository.upsertUser(newUser)
+            Log.d("Home", "User guardado localmente exitoso $newUser")
         }
+
+
+
+
     }
 
 
-    fun logout(){
-        viewModelScope.launch {
-            _generalUiState.value = GeneralUiState.Loading
-            val result = updateUserUseCase()
-            result.onSuccess {
-                dataStoreManager.deleteKey(PreferenceKeys.TOKEN)
-                dataStoreManager.clearAll()
-                _generalUiState.value = GeneralUiState.Success
-                Log.d("ProfileViewModel", "Sesión cerrada exitosamente. Token y datos de usuario eliminados. $result")
-            }.onFailure { exception ->
-                when (exception) {
-                    is HttpException -> {
-                        val httpCode = exception.code()
-                        when (httpCode) {
-                            400 -> {
-                                val msg = "Error 400 (Bad Request): Invalid or expired token. Could not log out from server. API Message"
-                                Log.e("ProfileViewModel", "UI Error Message (400): $msg")
-                            }
-                            401 -> {
-                                val msg = "Error 401 (Unauthorized): Unauthorized. Invalid or missing token. Could not log out from server. API Message"
-                                Log.e("ProfileViewModel", "UI Error Message (401): $msg")
-                            }
-                            500 -> {
-                                val msg = "Error 500 (Internal Server Error): Could not log out from server. API Message"
-                                Log.e("ProfileViewModel", "UI Error Message (500): $msg")
-                            }
-                            550 -> { // Assuming 550 is a custom error code from your API
-                                val msg = "Error 550 (Custom Server Error): Custom server error. Could not log out from server. API Message"
-                                Log.e("ProfileViewModel", "UI Error Message (550): $msg")
-                            }
-                            else -> {
-                                val msg = "HTTP Error ${exception}: Could not log out from server. API Message"
-                                Log.e("ProfileViewModel", "UI Error Message (Generic HTTP): $msg")
-                            }
-                        }
-                    }
-                    else -> {
-                        val msg = " ${exception.message ?: "Unknown"}"
-                        Log.e("ProfileViewModel", "UI Error Message (Connection/Unexpected): $msg")
-                    }
-                }
-                val errorMessage = "Error al cerrar sesión. Por favor, inténtalo de nuevo. Detalles en logs."
-                _generalUiState.value = GeneralUiState.Error(errorMessage)
-            }
-        }
+    suspend fun logout(){
+        dataStoreManager.clearAll()
+        _generalUiState.value = GeneralUiState.Success
     }
+
+//    fun logouts(){
+//        viewModelScope.launch {
+//            _generalUiState.value = GeneralUiState.Loading
+//            val result = updateUserUseCase()
+//            result.onSuccess {
+//                dataStoreManager.deleteKey(PreferenceKeys.TOKEN)
+//                dataStoreManager.clearAll()
+//                _generalUiState.value = GeneralUiState.Success
+//                Log.d("ProfileViewModel", "Sesión cerrada exitosamente. Token y datos de usuario eliminados. $result")
+//            }.onFailure { exception ->
+//                when (exception) {
+//                    is HttpException -> {
+//                        val httpCode = exception.code()
+//                        when (httpCode) {
+//                            400 -> {
+//                                val msg = "Error 400 (Bad Request): Invalid or expired token. Could not log out from server. API Message"
+//                                Log.e("ProfileViewModel", "UI Error Message (400): $msg")
+//                            }
+//                            401 -> {
+//                                val msg = "Error 401 (Unauthorized): Unauthorized. Invalid or missing token. Could not log out from server. API Message"
+//                                Log.e("ProfileViewModel", "UI Error Message (401): $msg")
+//                            }
+//                            500 -> {
+//                                val msg = "Error 500 (Internal Server Error): Could not log out from server. API Message"
+//                                Log.e("ProfileViewModel", "UI Error Message (500): $msg")
+//                            }
+//                            550 -> { // Assuming 550 is a custom error code from your API
+//                                val msg = "Error 550 (Custom Server Error): Custom server error. Could not log out from server. API Message"
+//                                Log.e("ProfileViewModel", "UI Error Message (550): $msg")
+//                            }
+//                            else -> {
+//                                val msg = "HTTP Error ${exception}: Could not log out from server. API Message"
+//                                Log.e("ProfileViewModel", "UI Error Message (Generic HTTP): $msg")
+//                            }
+//                        }
+//                    }
+//                    else -> {
+//                        val msg = " ${exception.message ?: "Unknown"}"
+//                        Log.e("ProfileViewModel", "UI Error Message (Connection/Unexpected): $msg")
+//                    }
+//                }
+//                val errorMessage = "Error al cerrar sesión. Por favor, inténtalo de nuevo. Detalles en logs."
+//                _generalUiState.value = GeneralUiState.Error(errorMessage)
+//            }
+//        }
+//    }
 
 
 
