@@ -9,13 +9,15 @@ import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
 import com.robstore.core.common.NameValidationState
 import com.robstore.core.common.PhoneValidationState
+import com.robstore.core.store.local.dataStore.DataStoreManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
-    private val registerUseCase: RegisterUseCase
+    private val registerUseCase: RegisterUseCase,
+    private val dataStoreManager: DataStoreManager
 ): ViewModel(){
     private val _generalUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
     val generalUiState: StateFlow<GeneralUiState> = _generalUiState.asStateFlow()
@@ -204,28 +206,29 @@ class RegisterViewModel(
             val result = registerUseCase(name, email, password, phone)
 
             result.onSuccess { data ->
-                if (data.message.isNotEmpty()) {
-                    _nameValidationState.value = NameValidationState.Valid
-                    _emailValidationState.value = EmailValidationState.Valid
-                    _passwordValidationState.value = PasswordValidationState.Valid
-                    _confirmPasswordValidationState.value = PasswordValidationState.Valid
-                    _phoneValidationState.value = PhoneValidationState.Valid
-                    Log.d(
-                        "LoginViewModel", "Registro y Login exitoso para $email. Token guardado por el Repositorio."
-                    )
-                    _generalUiState.value = GeneralUiState.Success
-                }
-//                else {
-//                    _emailValidationState.value = EmailValidationState.Error
-//                    _passwordValidationState.value = PasswordValidatioinState.Invalid
-//                    Log.d("LoginViewModel", "Usuario no registrado o contraseña incorrecta.")
-//                    _loginUiState.value = LoginUiState.Error("usuario o contraseña incorrecta")
-//                }
+                _nameValidationState.value = NameValidationState.Valid
+                _emailValidationState.value = EmailValidationState.Valid
+                _passwordValidationState.value = PasswordValidationState.Valid
+                _confirmPasswordValidationState.value = PasswordValidationState.Valid
+                _phoneValidationState.value = PhoneValidationState.Valid
+
+                dataStoreManager.saveUserInformation(
+                    name = data.name,
+                    email = data.email,
+                    phone = data.phone,
+                )
+
+
+                Log.d(
+                    "LoginViewModel", "Registro y Login exitoso para $email. Token guardado por el Repositorio."
+                )
+                _generalUiState.value = GeneralUiState.Success
+
             }.onFailure { exception ->
                 _emailValidationState.value = EmailValidationState.Error
                 _passwordValidationState.value = PasswordValidationState.Invalid
-                Log.e("LoginViewModel", "Error en login: ${exception.message}")
-                _generalUiState.value = GeneralUiState.Error("Error de login")
+                Log.e("LoginViewModel", "Error en registro: ${exception.message}")
+                _generalUiState.value = GeneralUiState.Error("Error de registro")
             }
         }
     }

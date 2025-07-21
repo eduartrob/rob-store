@@ -12,5 +12,5 @@ data class LogoutDTO(
 
 data class ImageResponseDTO(
     val message: String,
-    val fileUrl: String
+    val fileUrl: String?
 )

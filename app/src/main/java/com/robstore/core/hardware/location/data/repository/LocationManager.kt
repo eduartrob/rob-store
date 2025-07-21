@@ -23,7 +23,7 @@ class LocationManager(private val context: Context) : LocationRepository {
     init {
         Log.d("LocationManager", "LocationManager inicializado.")
     }
-    @SuppressLint("MissingPermission") // La verificación de permisos se manejará en el ViewModel/UI
+    @SuppressLint("MissingPermission")
     override suspend fun getLastLocation(): Result<Location> = suspendCancellableCoroutine { continuation ->
         Log.d("LocationManager", "Intentando obtener la última ubicación conocida.")
         fusedLocationClient.lastLocation
@@ -50,21 +50,18 @@ class LocationManager(private val context: Context) : LocationRepository {
         return try {
             val geocoder = Geocoder(context, Locale.getDefault())
             val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Para API 33+ (Android 13+), usa el método asíncrono
                 suspendCancellableCoroutine { continuation ->
                     geocoder.getFromLocation(location.latitude, location.longitude, 1) { list ->
                         continuation.resume(list)
                     }
                 }
             } else {
-                // Para APIs anteriores, usa el método síncrono (debe estar en un hilo de fondo)
                 @Suppress("DEPRECATION")
                 geocoder.getFromLocation(location.latitude, location.longitude, 1)
             }
 
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0]
-                // Prioriza la ciudad, luego el sub-admin, luego el admin (estado/provincia)
                 val region = address.countryName
                 Log.d("LocationManager", "Región obtenida: $region")
                 Result.success(region ?: "Región Desconocida")

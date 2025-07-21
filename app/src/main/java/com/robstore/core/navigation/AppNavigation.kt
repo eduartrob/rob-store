@@ -39,12 +39,23 @@ import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFact
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
 ) {
-    val factory = remember { LoginViewModelFactory(LoginAppModule.loginUseCase, LoginAppModule.getDataStoreManager()) }
+    val factory = remember {
+        LoginViewModelFactory(
+            LoginAppModule.loginUseCase,
+            LoginAppModule.getDataStoreManager(),
+            LoginAppModule.getInternetConnectivityUseCase()
+        )
+    }
     val loginViewModel: LoginViewModel = viewModel(factory = factory)
 
     val initialDestination by loginViewModel.initialDestination.collectAsState()
 
-    val registerViewModelFactory = remember { RegisterViewModelFactory(RegisterAppModule.registerUseCase) }
+    val registerViewModelFactory = remember {
+        RegisterViewModelFactory(
+            RegisterAppModule.registerUseCase,
+            LoginAppModule.getDataStoreManager()
+        )
+    }
     val registerViewModel: RegisterViewModel = viewModel(factory = registerViewModelFactory)
 
     val recoveryViewModelFactory = remember { RecoveryViewModelFactory(RecoveryAppModule.recoveryUseCase) }

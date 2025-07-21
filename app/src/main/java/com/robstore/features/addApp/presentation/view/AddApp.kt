@@ -1,18 +1,15 @@
-package com.robstore.features.myApps.presentation.view
+package com.robstore.features.addApp.presentation.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,29 +23,25 @@ import androidx.compose.ui.unit.dp
 import android.R
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.CloudUpload // Icono para subir/cambiar imagen
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api // Para OutlinedTextField
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField // Para los campos de texto
-import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 
 import androidx.compose.ui.res.painterResource
 
@@ -56,23 +49,24 @@ import androidx.compose.ui.text.style.TextAlign
 
 
 import androidx.compose.ui.unit.sp
-import com.robstore.features.app.domain.model.AppInfo // Asegúrate de la importación correcta de AppInfo
+import coil.compose.AsyncImage
+import com.robstore.features.addApp.presentation.viewModel.AddAppViewModel
+import com.robstore.features.app.domain.model.AppInfo
+import com.robstore.features.myApps.presentation.view.AppEditScreen
 
 
-// Composable para la Pantalla de Edición de la Aplicación
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun AppEditScreen(
-    app: AppInfo,
-    onSave: (AppInfo) -> Unit, // Callback para guardar los cambios
-    onCancel: () -> Unit // Callback para cancelar la edición
+fun AppAddScreen(
+    onSave: (AppInfo) -> Unit,
+    onCancel: () -> Unit,
+    addAppViewModel: AddAppViewModel
 ) {
-    // Estados mutables para cada campo editable
-    var appName by remember { mutableStateOf(app.name) }
-    var appDescription by remember { mutableStateOf(app.description) }
-    var appVersion by remember { mutableStateOf("1.0.0") }
-    var appApkPath by remember { mutableStateOf("/sdcard/app.apk") }
-    var appSize by remember { mutableStateOf(app.size) }
+    val nameApp by addAppViewModel.nameInputText.collectAsState()
+    val description by addAppViewModel.descriptionInputText.collectAsState()
+    val version by addAppViewModel.versionInputText.collectAsState()
+    val route by addAppViewModel.routeInputText.collectAsState()
+    val size by addAppViewModel.sizeInputText.collectAsState()
+    val photoApp by addAppViewModel.photoApp.collectAsState()
 
     Column(
         modifier = Modifier
@@ -95,14 +89,28 @@ fun AppEditScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
         ) {
-            Image(
-                painter = painterResource(id = app.iconResId),
-                contentDescription = "Icono de la aplicación actual",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.LightGray)
-            )
+            if (!photoApp.isNullOrBlank()) {
+                AsyncImage(
+                    model = photoApp,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Foto de perfil por defecto",
+                    tint = Color.DarkGray,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray)
+                        .padding(20.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { /* Acción para abrir selector de imagen */ println("Cambiar imagen clickeado") },
@@ -123,8 +131,8 @@ fun AppEditScreen(
             textAlign = TextAlign.Center // Centra el texto del label
         )
         OutlinedTextField(
-            value = appName,
-            onValueChange = { appName = it },
+            value = nameApp,
+            onValueChange = {  },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
@@ -139,8 +147,8 @@ fun AppEditScreen(
             textAlign = TextAlign.Center // Centra el texto del label
         )
         OutlinedTextField(
-            value = appDescription,
-            onValueChange = { appDescription = it },
+            value = description,
+            onValueChange = {  },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp)
@@ -157,14 +165,13 @@ fun AppEditScreen(
             textAlign = TextAlign.Center // Centra el texto del label
         )
         OutlinedTextField(
-            value = appVersion,
-            onValueChange = { appVersion = it },
+            value = version,
+            onValueChange = {  },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         )
 
-        // --- Actualizar APK (Simulado como campo de texto para ruta) ---
         Text(
             text = "Ruta APK",
             style = MaterialTheme.typography.bodyLarge,
@@ -172,8 +179,8 @@ fun AppEditScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
-            value = appApkPath,
-            onValueChange = { appApkPath = it },
+            value = route,
+            onValueChange = {  },
             // label = { Text("Ruta APK") }, // Eliminado
             modifier = Modifier
                 .fillMaxWidth()
@@ -188,8 +195,8 @@ fun AppEditScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
-            value = appSize,
-            onValueChange = { appSize = it },
+            value = size,
+            onValueChange = {  },
             // label = { Text("Tamaño") }, // Eliminado
             modifier = Modifier
                 .fillMaxWidth()
@@ -211,14 +218,7 @@ fun AppEditScreen(
                 Text("Cancelar", fontSize = 16.sp, color = Color(0xFF007aff)) // Color del texto del botón cancelado
             }
             Button(
-                onClick = {
-                    val updatedApp = app.copy(
-                        name = appName,
-                        description = appDescription,
-                        size = appSize
-                    )
-                    onSave(updatedApp)
-                },
+                onClick = {},
                 modifier = Modifier.weight(1f).height(50.dp).padding(horizontal = 4.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF007aff), // Color azul para el fondo

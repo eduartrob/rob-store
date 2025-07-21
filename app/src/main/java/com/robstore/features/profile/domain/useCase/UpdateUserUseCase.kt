@@ -6,6 +6,7 @@ import com.robstore.features.profile.domain.model.ImageProfile
 import com.robstore.features.profile.domain.model.Logout
 import com.robstore.features.profile.domain.model.UpdateUser
 import com.robstore.features.profile.domain.repository.UpdateUserRepository
+import okhttp3.MultipartBody
 
 class UpdateUserUseCase(
     private val updateUserRepository: UpdateUserRepository
@@ -21,8 +22,8 @@ class UpdateUserUseCase(
 
 
 
-    suspend fun uploadProfilePicture(imageUri: Uri, context: Context): Result<ImageProfile> {
-        return updateUserRepository.uploadProfilePicture(imageUri, context)
+    suspend fun uploadProfilePicture(imagePart: MultipartBody.Part): Result<ImageProfile> {
+        return updateUserRepository.uploadProfilePicture(imagePart)
     }
 //
 //

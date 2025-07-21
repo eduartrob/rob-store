@@ -1,5 +1,9 @@
 package com.robstore.features.authentication.register.domain.model
 
 data class Register(
-    val message: String
+    val name: String,
+    val email: String,
+    val phone: String,
+    val region: String?
 )
+

@@ -13,9 +13,19 @@ class RegisterRepositoryImpl(
         return try {
             val response = registerService.register(registerRequest)
             if (response.isSuccessful) {
-                response.body()?.let { registerValidateDTO ->
-                    Result.success(Register(message = registerValidateDTO.message))
-                } ?: Result.failure(Exception("Respuesta exitosa pero cuerpo de datos nulo."))
+                val registerResponse = response.body()
+                if(registerResponse != null){
+                    val userData = registerResponse.data
+
+                    Result.success(Register(
+                        name = userData.name,
+                        email = userData.email,
+                        phone = userData.phone,
+                        region = userData.region
+                    ))
+                } else {
+                Result.failure(Exception("Register fallido: Respuesta exitosa pero cuerpo de datos nulo."))
+                }
             } else {
                 Result.failure(Exception("Code fallido: ${response.code()}"))
             }

@@ -62,11 +62,10 @@ fun MyAppsScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFf0f3f8)) // Fondo ligero
+            .background(Color(0xFFf0f3f8))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header con botón de regreso y título
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -80,10 +79,10 @@ fun MyAppsScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.weight(0.15f))
             IconButton(onClick = {}) {
                 Icon(
-                    imageVector = Icons.Filled.AddCircleOutline, // Icono de añadir
+                    imageVector = Icons.Filled.AddCircleOutline,
                     contentDescription = "Añadir aplicación",
-                    modifier = Modifier.size(38.dp), // Tamaño un poco más grande
-                    tint = Color(0xFF007aff) // Color azul
+                    modifier = Modifier.size(38.dp),
+                    tint = Color(0xFF007aff)
                 )
             }
         }

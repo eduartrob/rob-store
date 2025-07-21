@@ -1,5 +1,7 @@
 package com.robstore.features.authentication.login.presentation.view
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -8,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,7 +65,9 @@ import com.robstore.R
 import com.robstore.core.common.EmailValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
+import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.authentication.login.presentation.viewModel.LoginViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 
 @Composable
@@ -72,7 +77,6 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToRecoveryPasswd: () -> Unit,
 ) {
-    // Observa los otros estados necesarios para los campos de entrada y validación.
     val email: String by loginViewModel.emailInputText.collectAsState()
     val emailValidationState by loginViewModel.emailValidationState.collectAsState()
 
@@ -81,13 +85,12 @@ fun LoginScreen(
 
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Color del borde de la contraseña basado en la validación
+
     val passwordBorderColor by animateColorAsState(
         targetValue = if (passwordValidatioinState is PasswordValidationState.Invalid) Color.Red else Color(0xFFD4D4D4),
         animationSpec = tween(300)
     )
 
-    // Colores personalizados
     val greyColor = Color(0xFF525252)
     val greenColor = Color(0xFF4cb050)
     val typedTextColor = Color.Black
@@ -96,7 +99,9 @@ fun LoginScreen(
 
     val uiState by loginViewModel.loginUiState.collectAsState()
 
-    // Lanza la navegación a 'Home' cuando el estado sea `Success`
+
+
+
     LaunchedEffect(key1 = uiState) {
         if (uiState is GeneralUiState.Success) {
             onNavigateToHome()
@@ -142,14 +147,14 @@ fun LoginScreen(
                 )
             }
 
-            // Columna para los campos de formulario
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 25.dp, vertical = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                // Campo de Email
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -158,7 +163,7 @@ fun LoginScreen(
                         text = "Correo electrónico",
                         fontSize = 18.sp,
                         color = Color.Black,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                     OutlinedTextField(
                         value = email,
@@ -191,7 +196,6 @@ fun LoginScreen(
                             imeAction = ImeAction.Next
                         )
                     )
-                    // Muestra el mensaje de error del email
                     when (emailValidationState) {
                         is EmailValidationState.Empty -> Text(
                             text = "El correo electrónico es obligatorio.",
@@ -217,7 +221,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(10.dp))
 
-                // Campo de Contraseña
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -226,7 +230,7 @@ fun LoginScreen(
                         text = "Contraseña",
                         fontSize = 18.sp,
                         color = Color.Black,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                     OutlinedTextField(
                         value = password,
@@ -266,7 +270,6 @@ fun LoginScreen(
                             imeAction = ImeAction.Done
                         ),
                     )
-                    // Muestra el mensaje de error de la contraseña
                     when (passwordValidatioinState) {
                         is PasswordValidationState.Invalid -> Text(
                             text = "El correo o la contraseña son inválidos",
@@ -278,7 +281,6 @@ fun LoginScreen(
                     }
                 }
 
-                // Botón principal de Iniciar Sesión
                 Button(
                     onClick = { loginViewModel.validateCredentials() },
                     enabled = uiState !is GeneralUiState.Loading,
@@ -295,7 +297,7 @@ fun LoginScreen(
                     Text(text = "Iniciar Sesión", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
-                // Enlaces para "Olvidaste tu contraseña" y "Crear cuenta"
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -341,13 +343,71 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f)),
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {},
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(54.dp),
                     color = Color.Black
                 )
+            }
+        }
+
+
+        AnimatedVisibility(
+            visible = uiState is GeneralUiState.Error,
+            enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 300))
+        ) {
+            val errorMessage = (uiState as? GeneralUiState.Error)?.message ?: "Error desconocido."
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .padding(24.dp)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {},
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Conexión Fallida",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = errorMessage,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { loginViewModel.onRetryConnection() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF3F8B41),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(text = "Reintentar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
     }

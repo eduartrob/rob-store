@@ -18,6 +18,7 @@ import com.robstore.core.store.local.database.dao.UserDao
 import com.robstore.core.store.local.database.entities.UserEntity
 import com.robstore.core.store.local.database.repository.UserRepository
 import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
+import com.robstore.core.utils.ImageUtils
 import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.UUID
 
 
@@ -163,6 +167,8 @@ class ProfileViewModel(
         }
     }
 
+
+
     suspend fun updateCredentials(){
         val name = _nameInputText.value
         val email = _emailInputText.value
@@ -214,64 +220,40 @@ class ProfileViewModel(
             userRepository.upsertUser(newUser)
             Log.d("Home", "User guardado localmente exitoso $newUser")
         }
+    }
 
-
-
-
+    fun resetProfileUiState() {
+        _generalUiState.value = GeneralUiState.Idle // O el estado apropiado para tu pantalla después del éxito
     }
 
 
     suspend fun logout(){
+        _generalUiState.value = GeneralUiState.Loading
+        dataStoreManager.deleteKey(PreferenceKeys.TOKEN)
         dataStoreManager.clearAll()
-        _generalUiState.value = GeneralUiState.Success
-    }
 
-//    fun logouts(){
-//        viewModelScope.launch {
-//            _generalUiState.value = GeneralUiState.Loading
-//            val result = updateUserUseCase()
-//            result.onSuccess {
-//                dataStoreManager.deleteKey(PreferenceKeys.TOKEN)
-//                dataStoreManager.clearAll()
-//                _generalUiState.value = GeneralUiState.Success
-//                Log.d("ProfileViewModel", "Sesión cerrada exitosamente. Token y datos de usuario eliminados. $result")
-//            }.onFailure { exception ->
-//                when (exception) {
-//                    is HttpException -> {
-//                        val httpCode = exception.code()
-//                        when (httpCode) {
-//                            400 -> {
-//                                val msg = "Error 400 (Bad Request): Invalid or expired token. Could not log out from server. API Message"
-//                                Log.e("ProfileViewModel", "UI Error Message (400): $msg")
-//                            }
-//                            401 -> {
-//                                val msg = "Error 401 (Unauthorized): Unauthorized. Invalid or missing token. Could not log out from server. API Message"
-//                                Log.e("ProfileViewModel", "UI Error Message (401): $msg")
-//                            }
-//                            500 -> {
-//                                val msg = "Error 500 (Internal Server Error): Could not log out from server. API Message"
-//                                Log.e("ProfileViewModel", "UI Error Message (500): $msg")
-//                            }
-//                            550 -> { // Assuming 550 is a custom error code from your API
-//                                val msg = "Error 550 (Custom Server Error): Custom server error. Could not log out from server. API Message"
-//                                Log.e("ProfileViewModel", "UI Error Message (550): $msg")
-//                            }
-//                            else -> {
-//                                val msg = "HTTP Error ${exception}: Could not log out from server. API Message"
-//                                Log.e("ProfileViewModel", "UI Error Message (Generic HTTP): $msg")
-//                            }
-//                        }
-//                    }
-//                    else -> {
-//                        val msg = " ${exception.message ?: "Unknown"}"
-//                        Log.e("ProfileViewModel", "UI Error Message (Connection/Unexpected): $msg")
-//                    }
-//                }
-//                val errorMessage = "Error al cerrar sesión. Por favor, inténtalo de nuevo. Detalles en logs."
-//                _generalUiState.value = GeneralUiState.Error(errorMessage)
-//            }
-//        }
-//    }
+        val tokenErrorCodes = setOf(400, 401, 403, 406)
+        val result = updateUserUseCase()
+
+        result.onSuccess {
+            Log.d("ProfileViewModel", "Sesión cerrada exitosamente en el servidor. Token y datos de usuario eliminados.")
+            _generalUiState.value = GeneralUiState.Success
+        }.onFailure { exception ->
+            val httpCode = (exception as? HttpException)?.code()
+
+            if (httpCode != null && httpCode in tokenErrorCodes) {
+                Log.d("ProfileViewModel", "Error de token ($httpCode). Sesión considerada cerrada. No se puede usar el token.")
+                _generalUiState.value = GeneralUiState.Success
+            } else {
+                val msg = when (exception) {
+                    is HttpException -> "Error HTTP ${httpCode ?: "desconocido"}: No se pudo cerrar sesión."
+                    else -> "Error de conexión o inesperado: ${exception.message ?: "Desconocido"}"
+                }
+                Log.e("ProfileViewModel", "Error al cerrar sesión: $msg")
+                _generalUiState.value = GeneralUiState.Error("Error al cerrar sesión. Por favor, inténtalo de nuevo.")
+            }
+        }
+    }
 
 
 
@@ -288,18 +270,50 @@ class ProfileViewModel(
     private fun uploadProfilePicture(uri: Uri, context: Context) {
         viewModelScope.launch {
             _generalUiState.value = GeneralUiState.Loading
-            updateUserUseCase.uploadProfilePicture(uri, context).fold(
-                onSuccess = { imageProfile ->
-                    val url = imageProfile.url
-                    dataStoreManager.saveKey(PreferenceKeys.USER_PROFILE_PICTURE_URI, url)
-                    _photoUri.value = url
-                    _generalUiState.value = GeneralUiState.Success
 
-                },
-                onFailure = { e ->
-                    _generalUiState.value = GeneralUiState.Error(e.message ?: "Error al subir la foto.")
+            val isConnected = internetConnectivityUseCase.observeConnectivity().first()
+            if (!isConnected) {
+                _generalUiState.value = GeneralUiState.Error("No hay conexión a internet para subir la imagen.")
+                return@launch
+            }
+
+            val processedImageBytes = ImageUtils.processImageForUpload(context, uri)
+
+            if (processedImageBytes == null) {
+                _generalUiState.value = GeneralUiState.Error("Error al procesar la imagen. Inténtalo de nuevo.")
+                Log.e("ProfileViewModel", "Error: processedImageBytes es nulo, no se pudo procesar la imagen.")
+                return@launch
+            }
+
+            try {
+                val requestBody = processedImageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                val imagePart = MultipartBody.Part.createFormData("file", "profile_picture.jpg", requestBody)
+                updateUserUseCase.uploadProfilePicture(imagePart).fold(
+                    onSuccess = { imageProfile ->
+                        val url = imageProfile.url
+                        if (url != null) {
+                            dataStoreManager.saveKey(PreferenceKeys.USER_PROFILE_PICTURE_URI, url)
+                            _photoUri.value = url
+                        }
+                        _generalUiState.value = GeneralUiState.Success
+                        Log.d("ProfileViewModel", "Imagen de perfil subida y URL obtenida: ${url}")
+                    },
+                    onFailure = { e ->
+                        _generalUiState.value = GeneralUiState.Error(e.message ?: "Error al subir la foto.")
+                        Log.e("ProfileViewModel", "Error al subir imagen: ${e.message}", e)
+                    }
+                )
+            } catch (e: HttpException) {
+                val errorMessage = when (e.code()) {
+                    413 -> "La imagen es demasiado grande. Por favor, elige una más pequeña."
+                    else -> "Error del servidor al subir imagen (${e.code()}): ${e.message()}"
                 }
-            )
+                _generalUiState.value = GeneralUiState.Error(errorMessage)
+                Log.e("ProfileViewModel", "HttpException al subir imagen: $errorMessage", e)
+            } catch (e: Exception) {
+                _generalUiState.value = GeneralUiState.Error("Error inesperado al subir imagen: ${e.message ?: "Desconocido"}")
+                Log.e("ProfileViewModel", "Error inesperado al subir imagen:", e)
+            }
         }
     }
 

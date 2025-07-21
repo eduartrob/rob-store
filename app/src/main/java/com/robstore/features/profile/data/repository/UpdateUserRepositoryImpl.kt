@@ -55,25 +55,9 @@ class UpdateUserRepositoryImpl(
         }
     }
 
-    override suspend fun uploadProfilePicture(imageUri: Uri, context: Context): Result<ImageProfile> {
+    override suspend fun uploadProfilePicture(imagePart: MultipartBody.Part): Result<ImageProfile> {
         return try {
-            val inputStream = context.contentResolver.openInputStream(imageUri)
-            val imageBytes = inputStream?.readBytes()
-            inputStream?.close()
-
-            if (imageBytes == null) {
-                return Result.failure(Exception("No se pudieron leer los bytes de la imagen."))
-            }
-
-            val requestBody = imageBytes.toRequestBody("image/*".toMediaTypeOrNull())
-
-            val imagePart = MultipartBody.Part.createFormData("file", "profile_picture.jpg", requestBody)
-
-
-            Log.d("UpdateUserRepositoryImpl", "Subiendo imagen: URI=$imageUri, Bytes=${imageBytes.size}")
-
-            val response = profileService.uploadProfilePicture(imagePart)
-
+        val response = profileService.uploadProfilePicture(imagePart)
             if (response.isSuccessful) {
                 response.body()?.let { dto ->
                     Log.d("UpdateUserRepositoryImpl", "Imagen subida con éxito. DTO: $dto")

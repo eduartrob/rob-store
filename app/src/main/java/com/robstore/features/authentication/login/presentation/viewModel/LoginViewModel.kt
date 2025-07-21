@@ -10,19 +10,22 @@ import com.robstore.core.common.EmailValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
 import com.robstore.core.store.local.dataStore.DataStoreManager
+import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.features.authentication.login.di.AppModule.tokenRepository
 import com.robstore.features.authentication.login.domain.useCase.LoginUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
-    private val dataStoreManager: DataStoreManager
-    ): ViewModel(){
+    private val dataStoreManager: DataStoreManager,
+    private val internetConnectivityUseCase: InternetConnectivityUseCase
+): ViewModel(){
 
     private val _emailInputText = MutableStateFlow("")
     val emailInputText: StateFlow<String> = _emailInputText
@@ -51,6 +54,8 @@ class LoginViewModel(
     private val _loginUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
     val loginUiState: StateFlow<GeneralUiState> = _loginUiState.asStateFlow()
 
+    private val _isOnline = MutableStateFlow<Boolean>(true)
+
 
     init {
         viewModelScope.launch {
@@ -58,6 +63,27 @@ class LoginViewModel(
                 _initialDestination.value = if (token.isNullOrEmpty()) "login" else "home"
                 Log.d("LoginViewModel", "Token cambió: ${if (token.isNullOrEmpty()) "NULO/VACÍO" else "EXISTE"}. Destino Inicial: ${_initialDestination.value}")
             }
+        }
+
+
+
+        viewModelScope.launch {
+            internetConnectivityUseCase.observeConnectivity()
+                .collectLatest { isConnected ->
+                    _isOnline.value = isConnected
+
+                    if (!isConnected) {
+                        // Si no hay conexión, mostramos el error de inmediato
+                        _loginUiState.value = GeneralUiState.Error("No hay conexión a internet. Por favor, verifica tu conexión.")
+                        Log.d("LoginViewModel", "Estado de UI: Error de conexión a internet.")
+                    } else if (_loginUiState.value is GeneralUiState.Error &&
+                        (_loginUiState.value as GeneralUiState.Error).message == "No hay conexión a internet. Por favor, verifica tu conexión.") {
+                        // Si la conexión se restaura y el error actual era el de internet,
+                        // volvemos al estado Idle para mostrar la pantalla de login.
+                        _loginUiState.value = GeneralUiState.Idle
+                        Log.d("LoginViewModel", "Estado de UI: Conexión restaurada, volviendo a Idle.")
+                    }
+                }
         }
     }
 
@@ -138,6 +164,23 @@ class LoginViewModel(
                 _passwordValidationState.value = PasswordValidationState.Invalid
                 Log.e("LoginViewModel", "Error en login: ${exception.message}")
                 _loginUiState.value = GeneralUiState.Error("Error de login: ${exception.message}")
+            }
+        }
+    }
+
+    fun onRetryConnection() {
+        viewModelScope.launch {
+
+            if (_loginUiState.value is GeneralUiState.Error &&
+                (_loginUiState.value as GeneralUiState.Error).message == "No hay conexión a internet. Por favor, verifica tu conexión.") {
+                val isConnectedNow = internetConnectivityUseCase.observeConnectivity().first()
+                if (isConnectedNow) {
+                    _loginUiState.value = GeneralUiState.Idle
+                    Log.d("LoginViewModel", "Reintento de conexión exitoso. Volviendo a Idle.")
+                } else {
+                    Log.d("LoginViewModel", "Reintento de conexión: No hay Internet aún.")
+                    _loginUiState.value = GeneralUiState.Error("No hay conexión a internet. Por favor, verifica tu conexión.")
+                }
             }
         }
     }
