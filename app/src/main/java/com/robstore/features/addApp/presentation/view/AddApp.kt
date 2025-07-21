@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 
 import android.R
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 
 import androidx.compose.foundation.layout.width
@@ -42,8 +41,6 @@ import androidx.compose.runtime.getValue
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-
-import androidx.compose.ui.res.painterResource
 
 import androidx.compose.ui.text.style.TextAlign
 
@@ -234,22 +231,22 @@ fun AppAddScreen(
 
 
 // --- Función de Previsualización ---
-@Preview(showBackground = true)
-@Composable
-fun PreviewAppEditScreen() {
-    MaterialTheme {
-        val sampleApp = AppInfo(
-            name = "Nombre de App",
-            iconResId = R.drawable.ic_dialog_email, // Icono de ejemplo
-            description = "Descripción de la aplicación que se está editando.",
-            rate = 4.0,
-            size = "50 MB"
-        )
-        AppEditScreen(
-            app = sampleApp,
-            onSave = { updatedApp -> println("Guardado: $updatedApp") },
-            onCancel = { println("Edición cancelada") }
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewAppEditScreen() {
+//    MaterialTheme {
+//        val sampleApp = AppInfo(
+//            name = "Nombre de App",
+//            iconResId = R.drawable.ic_dialog_email, // Icono de ejemplo
+//            description = "Descripción de la aplicación que se está editando.",
+//            rate = 4.0,
+//            size = "50 MB"
+//        )
+//        AppEditScreen(
+//            app = sampleApp,
+//            onSave = { updatedApp -> println("Guardado: $updatedApp") },
+//            onCancel = { println("Edición cancelada") }
+//        )
+//    }
+//}
 

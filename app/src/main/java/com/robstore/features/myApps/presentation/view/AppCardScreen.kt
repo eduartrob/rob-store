@@ -50,13 +50,13 @@ fun AppCard(app: AppInfo, onClick: (AppInfo) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icono de la aplicación
-            Image(
-                painter = painterResource(id = app.iconResId),
-                contentDescription = "${app.name} icon",
-                modifier = Modifier
-                    .size(50.dp) // Tamaño del icono
-                    .clip(RoundedCornerShape(12.dp)) // Redondea el icono también
-            )
+//            Image(
+//                painter = painterResource(id = app.iconResId),
+//                contentDescription = "${app.name} icon",
+//                modifier = Modifier
+//                    .size(50.dp) // Tamaño del icono
+//                    .clip(RoundedCornerShape(12.dp)) // Redondea el icono también
+//            )
 
             Spacer(modifier = Modifier.width(16.dp)) // Espacio entre el icono y el texto
 

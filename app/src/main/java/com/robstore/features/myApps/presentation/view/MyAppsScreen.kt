@@ -14,8 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -50,14 +48,14 @@ fun MyAppsScreen(onBack: () -> Unit) {
 
 
 
-    val myAppsList = remember {
-        listOf(
-            AppInfo(name = "WhatsApp", iconResId = R.drawable.logo, description = "Aplicación de mensajería instantánea y llamadas gratuitas.", rate = 4.7, size = "65 MB"),
-            AppInfo(name = "Spotify", iconResId = R.drawable.logo, description = "Transmisión de música, podcasts y audiolibros.", rate = 4.8, size = "105 MB"),
-            AppInfo(name = "Netflix", iconResId = R.drawable.logo, description = "Servicio de streaming de películas y series de televisión.", rate = 4.5, size = "75 MB"),
-            AppInfo(name = "Gmail", iconResId = R.drawable.logo, description = "Cliente de correo electrónico de Google.", rate = 4.3, size = "55 MB")
-        )
-    }.toMutableList()
+//    val myAppsList = remember {
+//        listOf(
+////            AppInfo(name = "WhatsApp", iconResId = R.drawable.logo, description = "Aplicación de mensajería instantánea y llamadas gratuitas.", rate = 4.7, size = "65 MB"),
+////            AppInfo(name = "Spotify", iconResId = R.drawable.logo, description = "Transmisión de música, podcasts y audiolibros.", rate = 4.8, size = "105 MB"),
+////            AppInfo(name = "Netflix", iconResId = R.drawable.logo, description = "Servicio de streaming de películas y series de televisión.", rate = 4.5, size = "75 MB"),
+////            AppInfo(name = "Gmail", iconResId = R.drawable.logo, description = "Cliente de correo electrónico de Google.", rate = 4.3, size = "55 MB")
+//        )
+//    }.toMutableList()
 
     Column(
         modifier = Modifier
@@ -92,11 +90,11 @@ fun MyAppsScreen(onBack: () -> Unit) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(myAppsList, key = { it.name }) { app ->
-                AppCard(app = app, onClick = {
-                    selectedAppForDetail = it
-                })
-            }
+//            items(myAppsList, key = { it.name }) { app ->
+//                AppCard(app = app, onClick = {
+//                    selectedAppForDetail = it
+//                })
+//            }
         }
     }
 
@@ -139,17 +137,17 @@ fun MyAppsScreen(onBack: () -> Unit) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 // Aquí se carga tu AppEditScreen
-                AppEditScreen(
-                    app = app,
-                    onSave = { updatedApp ->
-                        val index = myAppsList.indexOfFirst { it.name == updatedApp.name }
-                        if (index != -1) {
-                            myAppsList[index] = updatedApp // Actualiza la app en la lista
-                        }
-                        appToEdit = null // Cierra el diálogo de edición
-                    },
-                    onCancel = { appToEdit = null } // Cierra el diálogo de edición sin guardar
-                )
+//                AppEditScreen(
+//                    app = app,
+//                    onSave = { updatedApp ->
+//                        val index = myAppsList.indexOfFirst { it.name == updatedApp.name }
+//                        if (index != -1) {
+//                            myAppsList[index] = updatedApp // Actualiza la app en la lista
+//                        }
+//                        appToEdit = null // Cierra el diálogo de edición
+//                    },
+//                    onCancel = { appToEdit = null } // Cierra el diálogo de edición sin guardar
+//                )
             }
         }
     }

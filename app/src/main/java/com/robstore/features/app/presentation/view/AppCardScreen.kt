@@ -31,36 +31,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.robstore.features.app.domain.model.AppInfo
 
 
-// Composable para una Sola "Card" de Aplicación
 @Composable
 fun AppCard(app: AppInfo, onClick: (AppInfo) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick(app) }, // Hacemos la card clickeable
-        shape = RoundedCornerShape(12.dp), // Esquinas redondeadas para la card
+            .clickable { onClick(app) },
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFf0f3f8))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(2.dp)
-                .clip(RoundedCornerShape(8.dp)), // Padding interno de la card
+                .clip(RoundedCornerShape(8.dp)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icono de la aplicación
             Image(
-                painter = painterResource(id = app.iconResId),
+                painter = rememberAsyncImagePainter(model = app.iconUrl),
                 contentDescription = "${app.name} icon",
                 modifier = Modifier
                     .size(65.dp)
                     .clip(RoundedCornerShape(12.dp))
             )
 
-            Spacer(modifier = Modifier.width(16.dp)) // Espacio entre el icono y el texto
+            Spacer(modifier = Modifier.width(16.dp))
 
             // Información de la aplicación (nombre y descripción)
             Column(modifier = Modifier.weight(1f)) { // El Column toma el espacio restante

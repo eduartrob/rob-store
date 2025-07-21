@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -78,14 +77,14 @@ fun PopApp(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = app.iconResId),
-                contentDescription = "${app.name} icon",
-                modifier = Modifier
-                    .size(70.dp) // Tamaño del icono ajustado para pop-up
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.LightGray)
-            )
+//            Image(
+//                painter = painterResource(id = app.iconResId),
+//                contentDescription = "${app.name} icon",
+//                modifier = Modifier
+//                    .size(70.dp) // Tamaño del icono ajustado para pop-up
+//                    .clip(RoundedCornerShape(16.dp))
+//                    .background(Color.LightGray)
+//            )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = app.name,
@@ -219,23 +218,23 @@ fun PopApp(
 }
 
 // --- Función de Previsualización para PopApp ---
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewPopApp() {
-    MaterialTheme {
-        val sampleApp = AppInfo(
-            name = "App Flotante",
-            iconResId = R.drawable.ic_dialog_info, // Usando un icono de Android genérico para la preview
-            description = "Esta es una descripción más corta para una ventana flotante, para que el contenido sea más compacto. Permite visualizar el pop-up de forma rápida.",
-            rate = 4.5,
-            size = "45 MB"
-        )
-
-        PopApp(
-            app = sampleApp,
-            onBack = { println("PopApp cerrada en Preview") },
-            onDelete = { app -> println("Borrar ${app.name} clickeado en PopApp Preview") },
-            onEdit = { app -> println("Editar ${app.name} clickeado en PopApp Preview") }
-        )
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun PreviewPopApp() {
+//    MaterialTheme {
+//        val sampleApp = AppInfo(
+//            name = "App Flotante",
+//            iconResId = R.drawable.ic_dialog_info, // Usando un icono de Android genérico para la preview
+//            description = "Esta es una descripción más corta para una ventana flotante, para que el contenido sea más compacto. Permite visualizar el pop-up de forma rápida.",
+//            rate = 4.5,
+//            size = "45 MB"
+//        )
+//
+//        PopApp(
+//            app = sampleApp,
+//            onBack = { println("PopApp cerrada en Preview") },
+//            onDelete = { app -> println("Borrar ${app.name} clickeado en PopApp Preview") },
+//            onEdit = { app -> println("Editar ${app.name} clickeado en PopApp Preview") }
+//        )
+//    }
+//}

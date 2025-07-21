@@ -4,15 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import android.R
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 
 import androidx.compose.foundation.layout.width
@@ -38,11 +34,8 @@ import androidx.compose.material.icons.filled.CloudUpload // Icono para subir/ca
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api // Para OutlinedTextField
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField // Para los campos de texto
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -95,14 +88,14 @@ fun AppEditScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
         ) {
-            Image(
-                painter = painterResource(id = app.iconResId),
-                contentDescription = "Icono de la aplicación actual",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.LightGray)
-            )
+//            Image(
+//                painter = painterResource(id = app.iconResId),
+//                contentDescription = "Icono de la aplicación actual",
+//                modifier = Modifier
+//                    .size(100.dp)
+//                    .clip(RoundedCornerShape(20.dp))
+//                    .background(Color.LightGray)
+//            )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { /* Acción para abrir selector de imagen */ println("Cambiar imagen clickeado") },
@@ -234,22 +227,22 @@ fun AppEditScreen(
 
 
 // --- Función de Previsualización ---
-@Preview(showBackground = true)
-@Composable
-fun PreviewAppEditScreen() {
-    MaterialTheme {
-        val sampleApp = AppInfo(
-            name = "Nombre de App",
-            iconResId = R.drawable.ic_dialog_email, // Icono de ejemplo
-            description = "Descripción de la aplicación que se está editando.",
-            rate = 4.0,
-            size = "50 MB"
-        )
-        AppEditScreen(
-            app = sampleApp,
-            onSave = { updatedApp -> println("Guardado: $updatedApp") },
-            onCancel = { println("Edición cancelada") }
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewAppEditScreen() {
+//    MaterialTheme {
+//        val sampleApp = AppInfo(
+//            name = "Nombre de App",
+//            iconResId = R.drawable.ic_dialog_email, // Icono de ejemplo
+//            description = "Descripción de la aplicación que se está editando.",
+//            rate = 4.0,
+//            size = "50 MB"
+//        )
+//        AppEditScreen(
+//            app = sampleApp,
+//            onSave = { updatedApp -> println("Guardado: $updatedApp") },
+//            onCancel = { println("Edición cancelada") }
+//        )
+//    }
+//}
 

@@ -1,67 +1,99 @@
 package com.robstore.features.app.presentation.view
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.robstore.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.robstore.features.app.domain.model.AppInfo
 import com.robstore.features.app.presentation.state.AppFeatureScreen // Import the new state class
-import com.robstore.features.app.presentation.view.AppListContent // The actual list Composable
-
+import com.robstore.features.home.presentation.viewModel.HomeViewModel
 
 
 @Composable
 fun AppListScreen(
     onBackToHomeDashboard: () -> Unit,
-    onSubScreenChanged: (Boolean) -> Unit
+    onSubScreenChanged: (Boolean) -> Unit,
+    homeViewModel: HomeViewModel = viewModel()
 ) {
-    val appList = remember {
-        listOf(
-            AppInfo("Facebook", iconResId =  R.drawable.logoprueba,  "Conecta con amigos y familiares.", rate = 4.3, size = "23 MB"),
-            AppInfo("WhatsApp", iconResId =  R.drawable.logoprueba,  "Mensajería instantánea y llamadas.", rate = 4.3, size = "23 MB"),
-            AppInfo("Instagram", iconResId =  R.drawable.logoprueba,  "Comparte fotos y videos con tus seguidores.", rate = 4.3, size = "23 MB"),
-            AppInfo("X (Twitter)", iconResId =  R.drawable.logoprueba,  "Deportes, entretenimiento y conversación.", rate = 4.3, size = "23 MB"),
-            AppInfo("Spotify", iconResId =  R.drawable.logoprueba, "Millones de canciones y podcasts gratis.", rate = 4.3, size = "23 MB"),
-            AppInfo("Netflix", iconResId =  R.drawable.logoprueba, "Series de TV y películas en streaming.", rate = 4.3, size = "23 MB"),
-            AppInfo("YouTube", iconResId =  R.drawable.logoprueba, "Mira tus videos favoritos, canales y sube tu propio contenido.", rate = 4.3, size = "23 MB"),
-            AppInfo("TikTok", iconResId =  R.drawable.logoprueba, "Videos cortos para ti.", rate = 4.3, size = "23 MB"),
-            AppInfo("Google Maps", iconResId =  R.drawable.logoprueba, "Navega por el mundo de forma más rápida y sencilla.", rate = 4.3, size = "23 MB"),
-            AppInfo("Gmail", iconResId =  R.drawable.logoprueba, "Email de Google, gratis y seguro.", rate = 4.3, size = "23 MB")
-        )
-    }
+    val appList by homeViewModel.appList.collectAsState()
+    val appsLoading by homeViewModel.appsLoading.collectAsState()
+    val appsError by homeViewModel.appsError.collectAsState()
 
     var currentAppFeatureScreen by remember { mutableStateOf<AppFeatureScreen>(AppFeatureScreen.AppListContent) }
-
-
 
     LaunchedEffect(currentAppFeatureScreen) {
         onSubScreenChanged(currentAppFeatureScreen is AppFeatureScreen.AppListContent)
     }
 
-    when (currentAppFeatureScreen) {
-        AppFeatureScreen.AppListContent -> {
-            AppListContent(
-                appList = appList,
-                onAppSelected = { app -> currentAppFeatureScreen = AppFeatureScreen.AppDetailScreen(app) }
-            )
-        }
-        is AppFeatureScreen.AppDetailScreen -> {
-            AppDetailScreen(
-                app = (currentAppFeatureScreen as AppFeatureScreen.AppDetailScreen).app,
-                onBack = { currentAppFeatureScreen = AppFeatureScreen.AppListContent }
-            )
-        }
+    LaunchedEffect(Unit) {
+        homeViewModel.fetchApps()
+    }
 
+    when {
+        appsLoading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        appsError != null -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "Error al cargar apps: ${appsError}",
+                    color = Color.Red,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+        else -> {
+            when (currentAppFeatureScreen) {
+                AppFeatureScreen.AppListContent -> {
+                    AppListContent(
+                        // Mapea la lista de dominio (App) a tu modelo de UI (AppInfo)
+                        appList = appList.map { app ->
+                            AppInfo(
+                                id = app.id, // ID de la app
+                                name = app.name,
+                                description = app.description,
+                                // Accede a los detalles anidados con el operador de seguridad '?'
+                                iconUrl = app.filesDetails?.iconUrl ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon", // URL del icono, con placeholder
+                                rate = (app.uiDetails?.rate ?: 0.0).toString(),
+                                size = app.uiDetails?.size ?: "N/A" // Tamaño, con valor por defecto
+                            )
+                        },
+                        onAppSelected = { appInfo ->
+                            // Cuando se selecciona una AppInfo, busca el App original en la lista
+                            // y navega al detalle con el modelo de dominio App
+                            val selectedApp = appList.find { it.id == appInfo.id } // Usa el ID para una búsqueda más robusta
+                            selectedApp?.let {
+                                currentAppFeatureScreen = AppFeatureScreen.AppDetailScreen(it)
+                            }
+                        }
+                    )
+                }
+                is AppFeatureScreen.AppDetailScreen -> {
+                    // AppDetailScreen espera un objeto 'App' de dominio
+                    AppDetailScreen(
+                        app = (currentAppFeatureScreen as AppFeatureScreen.AppDetailScreen).app,
+                        homeViewModel = homeViewModel, // <-- ¡Pasa la instancia del ViewModel existente!
+                        onBack = { currentAppFeatureScreen = AppFeatureScreen.AppListContent }
+                    )
+                }
+            }
+        }
     }
 }

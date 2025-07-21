@@ -11,7 +11,7 @@ object HomeAppModul {
         RetrofitHelper.getHomeService()
     }
 
-    val homeRepositoryImpl: HomeRepositoryImpl by lazy {
+    private val homeRepositoryImpl: HomeRepositoryImpl by lazy {
         HomeRepositoryImpl(homeService)
     }
 

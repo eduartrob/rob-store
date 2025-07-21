@@ -24,7 +24,7 @@ fun AppListContent(
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(7.dp)
     ) {
-        items(appList, key = { it.name }) { app ->
+        items(items = appList, key = { it.id }) { app -> // Usa app.id como la clave única
             AppCard(app = app, onClick = onAppSelected)
         }
     }
