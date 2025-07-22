@@ -45,6 +45,7 @@ class HomeRepositoryImpl(
                             version = dto.version,
                             developerId = dto.developerId,
                             releaseDate = dto.releaseDate,
+                            rate = dto.rate,
                         )
                     }
                     Result.success(appList)
@@ -86,7 +87,8 @@ class HomeRepositoryImpl(
                             developerId = "",
                             releaseDate = "",
                             filesDetails = filesDetails,
-                            uiDetails = null
+                            uiDetails = null,
+                            rate = 0.0
                         )
                     )
                 } ?: Result.failure(Exception("Respuesta exitosa pero cuerpo de datos nulo para archivos de app."))

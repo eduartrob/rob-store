@@ -7,6 +7,7 @@ import com.robstore.features.authentication.login.data.datasource.LoginService
 import com.robstore.features.authentication.recoveryPassword.data.datasource.RecoveryService
 import com.robstore.features.authentication.register.data.datasource.RegisterService
 import com.robstore.features.home.data.datasource.HomeService
+import com.robstore.features.myApps.data.datasource.MyAppsService
 import com.robstore.features.profile.data.datasource.ProfileService
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -17,7 +18,9 @@ import java.util.concurrent.TimeUnit
 object RetrofitHelper {
     private const val BASE_URL = "https://store.eduartrob.xyz/"
     //private const val BASE_URL = "http://192.168.0.27:3000/"
-    private const val TIMEOUT = 20L
+    private const val CONNECT_TIMEOUT = 20L // Puedes mantener este en 20 segundos
+    private const val READ_TIMEOUT = 20L    // Puedes mantener este en 20 segundos
+    private const val WRITE_TIMEOUT = 600L
 
     private lateinit var retrofitInstance: Retrofit
     private lateinit var dataStoreManagerInstance: DataStoreManager
@@ -39,9 +42,9 @@ object RetrofitHelper {
 
     private fun buildHttpClient(extraInterceptors: List<Interceptor>): OkHttpClient {
         return OkHttpClient.Builder()
-            .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
-            .readTimeout(TIMEOUT, TimeUnit.SECONDS)
-            .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
+            .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
             .apply {
                 extraInterceptors.forEach { addInterceptor(it) }
             }
@@ -72,6 +75,10 @@ object RetrofitHelper {
 
     fun getHomeService(): HomeService {
         return getService((HomeService::class.java))
+    }
+
+    fun getMyAppsService(): MyAppsService {
+        return getService((MyAppsService::class.java))
     }
 
 }

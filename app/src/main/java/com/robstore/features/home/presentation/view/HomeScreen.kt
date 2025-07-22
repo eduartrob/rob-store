@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +49,6 @@ import com.robstore.core.hardware.camera.data.repository.CameraManager
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
 import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
 import com.robstore.core.store.local.dataStore.DataStoreManager
-import com.robstore.features.app.presentation.state.AppFeatureScreen
 import com.robstore.features.home.state.HomeScreen
 import com.robstore.features.myApps.presentation.view.MyAppsScreen
 import com.robstore.features.profile.presentation.view.ProfileScreen
@@ -58,8 +56,11 @@ import com.robstore.features.searchApp.presentation.viewModel.SearchAppScreen
 import com.robstore.features.app.presentation.view.AppListScreen
 import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
+import com.robstore.features.myApps.di.MyAppsModule
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
+
+
 
 
 @Composable
@@ -85,9 +86,12 @@ fun Home(
     val wifiConnectivityUseCase = remember { AppModule.getInternetConnectivityUseCase() }
 
 
+    val applicationContext = LocalContext.current.applicationContext
 
 
-
+    val myAppsViewModel = remember {
+        MyAppsModule.MyAppsModuleProvider.getMyAppsViewModel(applicationContext )
+    }
 
 
     val locationPermission = Manifest.permission.ACCESS_FINE_LOCATION
@@ -206,7 +210,11 @@ fun Home(
                     SearchAppScreen(onBack = { currentScreen = HomeScreen.AppList })
                 }
                 HomeScreen.MyApps -> {
-                    MyAppsScreen(onBack = { currentScreen = HomeScreen.AppList })
+                    MyAppsScreen(
+                        onBack = { currentScreen = HomeScreen.AppList },
+                        myAppsViewModel = myAppsViewModel,
+
+                        )
                 }
                 HomeScreen.Profile -> {
                     ProfileScreen(

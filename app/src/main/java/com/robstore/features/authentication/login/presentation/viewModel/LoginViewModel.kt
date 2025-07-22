@@ -163,14 +163,14 @@ class LoginViewModel(
                 _emailValidationState.value = EmailValidationState.Error
                 _passwordValidationState.value = PasswordValidationState.Invalid
                 Log.e("LoginViewModel", "Error en login: ${exception.message}")
-                _loginUiState.value = GeneralUiState.Error("Error de login: ${exception.message}")
+                //_loginUiState.value = GeneralUiState.Error("Error de login: ${exception.message}")
+                _loginUiState.value = GeneralUiState.Idle
             }
         }
     }
 
     fun onRetryConnection() {
         viewModelScope.launch {
-
             if (_loginUiState.value is GeneralUiState.Error &&
                 (_loginUiState.value as GeneralUiState.Error).message == "No hay conexión a internet. Por favor, verifica tu conexión.") {
                 val isConnectedNow = internetConnectivityUseCase.observeConnectivity().first()

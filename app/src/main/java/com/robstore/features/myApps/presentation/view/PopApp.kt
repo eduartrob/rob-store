@@ -1,6 +1,5 @@
 package com.robstore.features.myApps.presentation.view
 
-import android.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,26 +31,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview // Importa @Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp // Importa sp para el tamaño de la fuente
+import coil.compose.rememberAsyncImagePainter
 import com.robstore.features.app.domain.model.AppInfo
+import com.robstore.features.myApps.domain.model.App
 
 
 @Composable
 fun PopApp(
-    app: AppInfo,
-    onBack: () -> Unit, // Callback para regresar (actúa como "cerrar el pop-up")
-    onDelete: (AppInfo) -> Unit, // Callback para eliminar la app
-    onEdit: (AppInfo) -> Unit // Callback para editar la app
+    app: App, // Aceptar el modelo de dominio App
+    onBack: () -> Unit,
+    onDelete: (App) -> Unit, // Callback para eliminar la app (pasa App)
+    onEdit: (App) -> Unit // Callback para editar la app (pasa App)
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth() // Ocupa el 90% del ancho del diálogo
-            .wrapContentHeight() // Ajusta la altura al contenido
+            .fillMaxWidth() // <-- CAMBIO CLAVE: Usa fillMaxWidth() sin factor
             .background(Color(0xFFf0f3f8), shape = RoundedCornerShape(16.dp)) // Fondo con esquinas redondeadas
             .padding(16.dp), // Padding interno para el contenido del pop-up
         horizontalAlignment = Alignment.CenterHorizontally, // Centra horizontalmente
@@ -64,9 +63,9 @@ fun PopApp(
         ) {
             IconButton(onClick = onBack) { // Llama a onBack para cerrar la vista de detalles
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Puedes cambiar a Icons.Default.Close si tienes ese icono
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Cerrar",
-                    tint = Color.Gray // Un color sutil para el botón de cerrar
+                    tint = Color.Gray
                 )
             }
         }
@@ -77,18 +76,19 @@ fun PopApp(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-//            Image(
-//                painter = painterResource(id = app.iconResId),
-//                contentDescription = "${app.name} icon",
-//                modifier = Modifier
-//                    .size(70.dp) // Tamaño del icono ajustado para pop-up
-//                    .clip(RoundedCornerShape(16.dp))
-//                    .background(Color.LightGray)
-//            )
+            Image(
+                painter = rememberAsyncImagePainter(model = app.filesDetails?.iconUrl), // Carga la imagen desde la URL
+                contentDescription = "${app.name} icon",
+                modifier = Modifier
+                    .size(70.dp) // Tamaño del icono ajustado para pop-up
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.LightGray), // Fondo para el icono
+                contentScale = ContentScale.Crop // Escala de contenido
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = app.name,
-                style = MaterialTheme.typography.headlineMedium, // Tamaño del texto ajustado
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 modifier = Modifier.weight(1f),
@@ -108,7 +108,7 @@ fun PopApp(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = app.rate.toString(),
+                    text = app.rate.toString(), // Accede a rate directamente del modelo App
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
@@ -116,7 +116,7 @@ fun PopApp(
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = "Calificación",
-                    modifier = Modifier.size(18.dp), // Tamaño del icono ajustado
+                    modifier = Modifier.size(18.dp),
                     tint = Color(0xFFFFD700)
                 )
             }
@@ -127,7 +127,7 @@ fun PopApp(
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Text(
-                text = app.size,
+                text = app.uiDetails?.size ?: "N/A", // Accede a size de uiDetails
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 modifier = Modifier.weight(1f),
@@ -141,9 +141,9 @@ fun PopApp(
             onClick = { /* Acción para instalar/iniciar sesión */ println("Instalar/Iniciar Sesión clickeado para ${app.name}") },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp) // Altura ajustada
+                .height(55.dp)
                 .padding(vertical = 5.dp),
-            shape = RoundedCornerShape(25.dp), // Esquinas más redondeadas
+            shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3F8B41),
                 contentColor = Color.White
@@ -171,7 +171,7 @@ fun PopApp(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = app.description,
+                    text = app.description, // Accede a description directamente del modelo App
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.DarkGray
                 )
@@ -187,8 +187,8 @@ fun PopApp(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = { onDelete(app) },
-                modifier = Modifier.weight(1f).height(45.dp).padding(horizontal = 4.dp), // Altura y padding ajustados
+                onClick = { onDelete(app) }, // Pasa el objeto App completo
+                modifier = Modifier.weight(1f).height(45.dp).padding(horizontal = 4.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Red,
@@ -202,7 +202,7 @@ fun PopApp(
 
             Button(
                 onClick = { onEdit(app) },
-                modifier = Modifier.weight(1f).height(45.dp).padding(horizontal = 4.dp), // Altura y padding ajustados
+                modifier = Modifier.weight(1f).height(45.dp).padding(horizontal = 4.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF007aff),
@@ -216,25 +216,3 @@ fun PopApp(
         }
     }
 }
-
-// --- Función de Previsualización para PopApp ---
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun PreviewPopApp() {
-//    MaterialTheme {
-//        val sampleApp = AppInfo(
-//            name = "App Flotante",
-//            iconResId = R.drawable.ic_dialog_info, // Usando un icono de Android genérico para la preview
-//            description = "Esta es una descripción más corta para una ventana flotante, para que el contenido sea más compacto. Permite visualizar el pop-up de forma rápida.",
-//            rate = 4.5,
-//            size = "45 MB"
-//        )
-//
-//        PopApp(
-//            app = sampleApp,
-//            onBack = { println("PopApp cerrada en Preview") },
-//            onDelete = { app -> println("Borrar ${app.name} clickeado en PopApp Preview") },
-//            onEdit = { app -> println("Editar ${app.name} clickeado en PopApp Preview") }
-//        )
-//    }
-//}

@@ -20,12 +20,8 @@ class UpdateUserUseCase(
     }
 
 
-
-
     suspend fun uploadProfilePicture(imagePart: MultipartBody.Part): Result<ImageProfile> {
         return updateUserRepository.uploadProfilePicture(imagePart)
     }
-//
-//
 }
 

@@ -37,6 +37,16 @@ sealed class PhoneValidationState {
     object Error: PhoneValidationState()
 }
 
+sealed class AppValidationState {
+    object Valid : AppValidationState()
+    object Empty : AppValidationState()
+    object InvalidFormat : AppValidationState()
+    object TooShort : AppValidationState()
+    object TooLong : AppValidationState()
+    object NotSelected: AppValidationState()
+    object Error : AppValidationState()
+}
+
 
 sealed class GeneralUiState {
     object Idle : GeneralUiState()

@@ -2,6 +2,7 @@ package com.robstore.features.myApps.presentation.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,16 +15,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,30 +37,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.robstore.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.robstore.features.app.domain.model.AppInfo
+import com.robstore.features.myApps.domain.model.App
+import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModel
+
+import com.robstore.features.addApp.presentation.view.AppAddScreen
+
 
 
 @Composable
-fun MyAppsScreen(onBack: () -> Unit) {
-    var selectedAppForDetail by remember { mutableStateOf<AppInfo?>(null) }
-    var appToEdit by remember { mutableStateOf<AppInfo?>(null) }
-    var appToDelete by remember { mutableStateOf<AppInfo?>(null) }
+fun MyAppsScreen(
+    myAppsViewModel: MyAppsViewModel,
+    onBack: () -> Unit
+) {
+    val myAppsList by myAppsViewModel.myAppsList.collectAsState()
+    val myAppsLoading by myAppsViewModel.myAppsLoading.collectAsState()
+    val myAppsError by myAppsViewModel.myAppsError.collectAsState()
+
+    var selectedAppForDetail by remember { mutableStateOf<App?>(null) } // Usar App de dominio
+    var appToEdit by remember { mutableStateOf<App?>(null) } // Usar App de dominio
+    var appToDelete by remember { mutableStateOf<App?>(null) } // Usar App de dominio
+    var showAddAppScreen by remember { mutableStateOf(false) }
 
 
-
-//    val myAppsList = remember {
-//        listOf(
-////            AppInfo(name = "WhatsApp", iconResId = R.drawable.logo, description = "Aplicación de mensajería instantánea y llamadas gratuitas.", rate = 4.7, size = "65 MB"),
-////            AppInfo(name = "Spotify", iconResId = R.drawable.logo, description = "Transmisión de música, podcasts y audiolibros.", rate = 4.8, size = "105 MB"),
-////            AppInfo(name = "Netflix", iconResId = R.drawable.logo, description = "Servicio de streaming de películas y series de televisión.", rate = 4.5, size = "75 MB"),
-////            AppInfo(name = "Gmail", iconResId = R.drawable.logo, description = "Cliente de correo electrónico de Google.", rate = 4.3, size = "55 MB")
-//        )
-//    }.toMutableList()
+    LaunchedEffect(Unit) {
+        myAppsViewModel.fetchMyApps()
+    }
 
     Column(
         modifier = Modifier
@@ -68,6 +81,12 @@ fun MyAppsScreen(onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Volver"
+                )
+            }
             Text(
                 text = "Mis Aplicaciones",
                 style = MaterialTheme.typography.headlineMedium,
@@ -75,7 +94,7 @@ fun MyAppsScreen(onBack: () -> Unit) {
                 modifier = Modifier.weight(1f),
             )
             Spacer(modifier = Modifier.weight(0.15f))
-            IconButton(onClick = {}) {
+            IconButton(onClick = { showAddAppScreen = true }) {
                 Icon(
                     imageVector = Icons.Filled.AddCircleOutline,
                     contentDescription = "Añadir aplicación",
@@ -86,21 +105,49 @@ fun MyAppsScreen(onBack: () -> Unit) {
         }
         Spacer(modifier = Modifier.height(24.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-//            items(myAppsList, key = { it.name }) { app ->
-//                AppCard(app = app, onClick = {
-//                    selectedAppForDetail = it
-//                })
-//            }
+        when {
+            myAppsLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            myAppsError != null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "No hay nada por aqui",
+                        color = Color(0xFFc1c7c6),
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .padding(16.dp)
+                    )
+                }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(items = myAppsList, key = { it.id }) { app ->
+                        AppCard(
+                            app = AppInfo(
+                                name = app.name,
+                                description = app.description,
+                                iconUrl = app.filesDetails?.iconUrl
+                                    ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon",
+                                rate = app.rate.toString(),
+                                size = app.uiDetails?.size ?: "N/A",
+                                id = null.toString()
+                            ),
+                            onClick = { selectedAppForDetail = app }
+                        )
+                    }
+                }
+            }
         }
     }
 
     selectedAppForDetail?.let { app ->
-
-        println("DEBUG: Intentando mostrar el Dialog para: ${app.name}")
         Dialog(
             onDismissRequest = { selectedAppForDetail = null },
             properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -113,11 +160,12 @@ fun MyAppsScreen(onBack: () -> Unit) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
+                // Reutilizamos PopApp, pasándole el App de dominio
                 PopApp(
                     app = app,
                     onBack = { selectedAppForDetail = null },
-                    onDelete = { appToDelete = it; selectedAppForDetail = null },
-                    onEdit = { appToEdit = it; selectedAppForDetail = null }
+                    onDelete = { appToDelete = it; selectedAppForDetail = null }, // Pasa el App completo
+                    onEdit = { appToEdit = it; selectedAppForDetail = null }, // Pasa el App completo
                 )
             }
         }
@@ -130,31 +178,26 @@ fun MyAppsScreen(onBack: () -> Unit) {
         ) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth() // Mantén el ancho de la ventana de edición un poco más grande
+                    .fillMaxWidth()
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 // Aquí se carga tu AppEditScreen
-//                AppEditScreen(
-//                    app = app,
-//                    onSave = { updatedApp ->
-//                        val index = myAppsList.indexOfFirst { it.name == updatedApp.name }
-//                        if (index != -1) {
-//                            myAppsList[index] = updatedApp // Actualiza la app en la lista
-//                        }
-//                        appToEdit = null // Cierra el diálogo de edición
-//                    },
-//                    onCancel = { appToEdit = null } // Cierra el diálogo de edición sin guardar
-//                )
+                AppEditScreen(
+                    app = app, // Pasa el objeto App de dominio
+                    onSave = { updatedApp, newIconUri, newApkUri, newScreenshotUris ->
+                        // Llama a la función updateApp del ViewModel
+                        myAppsViewModel.updateApp(updatedApp, newIconUri, newApkUri, newScreenshotUris)
+                        appToEdit = null // Cierra el diálogo de edición después de guardar
+                    },
+                    onCancel = { appToEdit = null } // Cierra el diálogo de edición sin guardar
+                )
             }
         }
     }
 
-
-
-    // --- Diálogo para confirmar la eliminación (si se activa) ---
     appToDelete?.let { app ->
         AlertDialog(
             onDismissRequest = { appToDelete = null },
@@ -162,7 +205,7 @@ fun MyAppsScreen(onBack: () -> Unit) {
             text = { Text("¿Estás seguro de que quieres eliminar '${app.name}'?") },
             confirmButton = {
                 TextButton(onClick = {
-
+                    app.id?.let { myAppsViewModel.deleteApp(it) } // Llama a la función de eliminación en MyAppsViewModel
                     appToDelete = null // Cierra el diálogo de confirmación
                 }) {
                     Text("Eliminar")
@@ -176,17 +219,28 @@ fun MyAppsScreen(onBack: () -> Unit) {
         )
     }
 
-
-
-
-}
-
-@Preview(showBackground = true) // Añadido showSystemUi = true
-@Composable
-fun MyAppsScreenPreview() { // Renombrado a MyAppsScreenPreview para claridad
-    MaterialTheme {
-        MyAppsScreen(
-            onBack = {} // Implementación vacía para que la previsualización funcione
-        )
+    if (showAddAppScreen) {
+        Dialog(
+            onDismissRequest = { showAddAppScreen = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                AppAddScreen(
+                    onSave = { newApp, iconUri, apkUri, screenshotUris ->
+                        myAppsViewModel.addApp(newApp, iconUri, apkUri, screenshotUris)
+                    },
+                    onCancel = { showAddAppScreen = false },
+                    addAppViewModel = viewModel(),
+                    myAppsViewModel = myAppsViewModel
+                )
+            }
+        }
     }
 }

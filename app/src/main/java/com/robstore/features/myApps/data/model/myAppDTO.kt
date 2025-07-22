@@ -1,4 +1,4 @@
-package com.robstore.features.home.data.model
+package com.robstore.features.myApps.data.model
 
 import com.google.gson.annotations.SerializedName
 
@@ -12,21 +12,26 @@ data class AppFilesDetailsDTO(
     val uploadedAt: String? = null
 )
 
-data class AppFilesResponseDTO(
-    val message: String,
-    @SerializedName("appFiles")
-    val appFilesData: AppFilesDetailsDTO
+data class AppUIDetailsDTO(
+    val appFilesData: AppFilesDetailsDTO? = null
 )
 
 data class AppDTO(
-    @SerializedName("_id")
-    val id: String,
+    val _id: String,
     val name: String,
     val description: String,
     val version: String,
     val developerId: String,
     val releaseDate: String,
     val rate: Double,
-    @SerializedName("__v")
-    val versionField: Int? = null
+)
+
+data class CreateAppResponseDTO(
+    val message: String,
+    val app: AppDTO
+)
+
+data class GetDataFilesCreateAppResponseDTO(
+    val message: String,
+    val filesApp: AppFilesDetailsDTO
 )

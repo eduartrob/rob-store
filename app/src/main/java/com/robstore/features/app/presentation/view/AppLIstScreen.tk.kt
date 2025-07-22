@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.robstore.features.app.domain.model.AppInfo
 import com.robstore.features.app.presentation.state.AppFeatureScreen // Import the new state class
@@ -52,9 +53,10 @@ fun AppListScreen(
         appsError != null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Error al cargar apps: ${appsError}",
-                    color = Color.Red,
+                    text = "Error al cargar apps: $appsError",
+                    color = Color(0xFFc1c7c6),
                     textAlign = TextAlign.Center,
+                    fontSize = 20.sp,
                     modifier = Modifier.padding(16.dp)
                 )
             }
@@ -70,7 +72,7 @@ fun AppListScreen(
                                 name = app.name,
                                 description = app.description,
                                 // Accede a los detalles anidados con el operador de seguridad '?'
-                                iconUrl = app.filesDetails?.iconUrl ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon", // URL del icono, con placeholder
+                                iconUrl = app.filesDetails?.iconUrl ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon",
                                 rate = (app.uiDetails?.rate ?: 0.0).toString(),
                                 size = app.uiDetails?.size ?: "N/A" // Tamaño, con valor por defecto
                             )

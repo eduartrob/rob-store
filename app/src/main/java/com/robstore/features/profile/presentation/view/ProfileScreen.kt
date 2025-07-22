@@ -611,7 +611,6 @@ fun ProfileScreen(
                     onClick = {
                         coroutineScope.launch {
                             profileViewModel.logout()
-                            onLogout()
                         }
                     },
                     modifier = Modifier

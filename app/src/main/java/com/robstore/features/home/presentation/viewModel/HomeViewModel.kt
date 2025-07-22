@@ -96,12 +96,6 @@ class HomeViewModel(
             _appsLoading.value = true
             _appsError.value = null
 
-//            val isConnected = internetConnectivityUseCase.observeConnectivity().first()
-//            if (!isConnected) {
-//                _appsLoading.value = false
-//                _appsError.value = "No hay conexión a internet para cargar las aplicaciones."
-//                return@launch
-//            }
 
             try {
                 // 1. Obtener la lista básica de aplicaciones
@@ -117,24 +111,16 @@ class HomeViewModel(
                         if (appFilesResult.isSuccess) {
                             val appWithFiles = appFilesResult.getOrNull()
                             if (appWithFiles != null) {
-                                // Combinar los datos básicos con los detalles de los archivos
-                                // Los campos 'rate' y 'size' se inicializan con valores por defecto
-                                // ya que no vienen de ninguna de las APIs actuales.
                                 val combinedApp = basicApp.copy(
                                     filesDetails = appWithFiles.filesDetails,
-                                    // CAMBIO AQUÍ: Inicializa AppUIDetails con valores por defecto
                                     uiDetails = AppUIDetails()
                                 )
                                 enrichedApps.add(combinedApp)
                             } else {
-                                // Si no se encuentran archivos, añadir la app básica sin detalles de archivos
-                                // CAMBIO AQUÍ: Inicializa AppUIDetails con valores por defecto
                                 enrichedApps.add(basicApp.copy(uiDetails = AppUIDetails()))
                                 Log.w("HomeViewModel", "No se encontraron archivos para la app: ${basicApp.name} (${basicApp.id})")
                             }
                         } else {
-                            // Si falla la obtención de archivos para una app, añadir la app básica y loggear el error
-                            // CAMBIO AQUÍ: Inicializa AppUIDetails con valores por defecto
                             enrichedApps.add(basicApp.copy(uiDetails = AppUIDetails()))
                             Log.e("HomeViewModel", "Error al cargar archivos para la app ${basicApp.name} (${basicApp.id}): ${appFilesResult.exceptionOrNull()?.message}", appFilesResult.exceptionOrNull())
                         }
@@ -160,13 +146,6 @@ class HomeViewModel(
             _appFilesError.value = null
             _selectedAppFiles.value = null
 
-//            val isConnected = internetConnectivityUseCase.observeConnectivity().first()
-//            if (!isConnected) {
-//                _appFilesLoading.value = false
-//                _appFilesError.value = "No hay conexión a internet para cargar los archivos de la aplicación."
-//                return@launch
-//            }
-
             try {
                 // Llama a homeUseCase.getAppFiles(appId)
                 val result = homeUseCase.getAppFiles(appId)
@@ -177,7 +156,6 @@ class HomeViewModel(
                             if (app.id == appWithFiles.id) {
                                 app.copy(
                                     filesDetails = appWithFiles.filesDetails,
-                                    // CAMBIO AQUÍ: Inicializa AppUIDetails con valores por defecto
                                     uiDetails = AppUIDetails()
                                 )
                             } else {

@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.robstore.features.app.domain.model.AppInfo
 
 @Composable
@@ -50,13 +51,13 @@ fun AppCard(app: AppInfo, onClick: (AppInfo) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icono de la aplicación
-//            Image(
-//                painter = painterResource(id = app.iconResId),
-//                contentDescription = "${app.name} icon",
-//                modifier = Modifier
-//                    .size(50.dp) // Tamaño del icono
-//                    .clip(RoundedCornerShape(12.dp)) // Redondea el icono también
-//            )
+            Image(
+                painter = rememberAsyncImagePainter(model = app.iconUrl), // <-- CAMBIO: Carga desde URL
+                contentDescription = "${app.name} icon",
+                modifier = Modifier
+                    .size(50.dp) // Tamaño del icono
+                    .clip(RoundedCornerShape(12.dp)) // Redondea el icono también
+            )
 
             Spacer(modifier = Modifier.width(16.dp)) // Espacio entre el icono y el texto
 
@@ -79,27 +80,34 @@ fun AppCard(app: AppInfo, onClick: (AppInfo) -> Unit) {
                     overflow = TextOverflow.Ellipsis // Añade puntos suspensivos si el texto es muy largo
                 )
 
-                Text(
-                    text = "Actualizada: 12/05/2025",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray, // Color del texto de la descripción
-                    maxLines = 1, // Limita la descripción a 2 líneas
-                    overflow = TextOverflow.Ellipsis // Añade puntos suspensivos si el texto es muy largo
-                )
-                Spacer(modifier = Modifier.height(4.dp)) // Espacio entre nombre y descripción
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.End, // Asegura que los elementos internos de esta columna se alineen a la derecha
-                    verticalArrangement = Arrangement.Center // Asegura que los elementos internos de esta columna se centren verticalmente
-                )  {
-                    Button(
-                        onClick = { onClick(app) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007aff)) // Color azul
-                    ) {
-                        Text("Ver Detalles")
-                    }
+                // --- NUEVO: Mostrar Calificación y Tamaño ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = app.rate.toString(), // Muestra la calificación
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Light,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Calificación",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Yellow
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = app.size, // Muestra el tamaño
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Light,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
                 }
+                // --- FIN NUEVO ---
             }
         }
     }
