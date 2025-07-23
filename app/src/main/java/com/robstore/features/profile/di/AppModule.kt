@@ -11,11 +11,11 @@ object UpdateUserAppModule {
         RetrofitHelper.getProfileService()
     }
 
-    val updateUserRepositoryImpl: UpdateUserRepositoryImpl by lazy {
+    private val updateUserRepositoryImpl: UpdateUserRepositoryImpl by lazy {
         UpdateUserRepositoryImpl(profileService)
     }
 
-    val updateUserRepository: UpdateUserRepository by lazy {
+    private val updateUserRepository: UpdateUserRepository by lazy {
         updateUserRepositoryImpl
     }
 

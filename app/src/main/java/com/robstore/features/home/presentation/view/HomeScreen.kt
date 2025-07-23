@@ -2,10 +2,12 @@ package com.robstore.features.home.presentation.view
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,16 +59,19 @@ import com.robstore.features.app.presentation.view.AppListScreen
 import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
 import com.robstore.features.myApps.di.MyAppsModule
+import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 
 
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun Home(
     onNavigateToLogin: () -> Unit,
     homeViewModel: HomeViewModel,
+    myAppsViewModel: MyAppsViewModel,
     profileViewModel: ProfileViewModel
 ) {
     val systemUiController = rememberSystemUiController()
@@ -86,37 +91,70 @@ fun Home(
     val wifiConnectivityUseCase = remember { AppModule.getInternetConnectivityUseCase() }
 
 
-    val applicationContext = LocalContext.current.applicationContext
 
 
-    val myAppsViewModel = remember {
-        MyAppsModule.MyAppsModuleProvider.getMyAppsViewModel(applicationContext )
-    }
 
 
     val locationPermission = Manifest.permission.ACCESS_FINE_LOCATION
-    val permissionLauncher = rememberLauncherForActivityResult(
+    var hasLocationPermissionBeenRequested by remember { mutableStateOf(false) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
+            Log.d("Home", "Permiso de ubicación concedido.")
             homeViewModel.requestAndSaveCountry()
         } else {
-            Toast.makeText(context, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+            Log.d("Home", "Permiso de ubicación denegado por el usuario.")
+            Toast.makeText(context, "Permiso de ubicación denegado. Algunas funciones podrían no estar disponibles.", Toast.LENGTH_SHORT).show()
         }
     }
 
     LaunchedEffect(Unit) {
         val granted = ContextCompat.checkSelfPermission(context, locationPermission) == PackageManager.PERMISSION_GRANTED
+
         if (granted) {
+            Log.d("Home", "Permiso de ubicación ya concedido.")
             homeViewModel.requestAndSaveCountry()
-        } else {
-            permissionLauncher.launch(locationPermission)
+        } else if (!hasLocationPermissionBeenRequested) {
+            Log.d("Home", "Solicitando permiso de ubicación...")
+            locationPermissionLauncher.launch(locationPermission)
+            hasLocationPermissionBeenRequested = true
         }
     }
 
+
+
+    val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
+    var hasNotificationPermissionBeenRequested by remember { mutableStateOf(false) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            Log.d("Home", "Permiso de notificaciones concedido.")
+        } else {
+            Toast.makeText(context, "Permiso de notificaciones denegado. Algunas alertas podrían no mostrarse.", Toast.LENGTH_LONG).show()
+            Log.w("Home", "Permiso de notificaciones denegado.")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        // TIRAMISU es API 33
+        val granted = ContextCompat.checkSelfPermission(context, notificationPermission) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            Log.d("Home", "Permiso de notificaciones ya concedido.")
+        } else if (!hasNotificationPermissionBeenRequested) {
+            Log.d("Home", "Solicitando permiso de notificaciones...")
+            notificationPermissionLauncher.launch(notificationPermission)
+            hasNotificationPermissionBeenRequested = true
+        }
+    }
+
+
+
+
+
+
     var isFetched by remember { mutableStateOf(false) }
-
-
     LaunchedEffect(Unit) {
         if (!isFetched) {
             homeViewModel.fetchProfileImage()

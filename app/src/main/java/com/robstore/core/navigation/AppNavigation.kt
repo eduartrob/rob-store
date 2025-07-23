@@ -5,14 +5,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.robstore.core.hardware.camera.presentation.viewModel.CameraViewModel
-import com.robstore.core.hardware.location.domain.repository.LocationRepository
-import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
 import com.robstore.features.authentication.login.di.AppModule as LoginAppModule
 import com.robstore.features.authentication.recoveryPassword.di.AppModule as RecoveryAppModule
 import com.robstore.features.authentication.login.presentation.view.LoginScreen
@@ -30,6 +28,9 @@ import com.robstore.features.authentication.register.presentation.viewModel.Regi
 import com.robstore.features.home.di.HomeAppModul
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
 import com.robstore.features.home.presentation.viewModel.HomeViewModelFactory
+import com.robstore.features.myApps.di.MyAppsModule
+import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModel
+import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModelFactory
 import com.robstore.features.profile.di.UpdateUserAppModule
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
@@ -71,9 +72,16 @@ fun AppNavigation(
         )
     }
     val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
+    val context = LocalContext.current
 
-
-
+    val myAppsViewModelFactory = remember {
+        MyAppsViewModelFactory(
+            MyAppsModule.myAppsUseCase,
+            applicationContext = context,
+            MyAppsModule.myAppsNotificationsUseCase,
+        )
+    }
+    val myAppsViewModel: MyAppsViewModel = viewModel(factory = myAppsViewModelFactory)
 
 
     val profileViewModelFactory = remember { ProfileViewModelFactory(
@@ -147,6 +155,7 @@ fun AppNavigation(
                     },
                     homeViewModel = homeViewModel,
                     profileViewModel = profileViewModel,
+                    myAppsViewModel = myAppsViewModel,
                 )
             }
         }

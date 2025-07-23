@@ -1,6 +1,8 @@
 package com.robstore.features.authentication.login.di
 
 import android.content.Context
+import com.robstore.app.ui.notifications.AndroidNotificationService
+import com.robstore.core.common.notifications.INotificationService
 import com.robstore.core.hardware.camera.data.repository.CameraManager
 import com.robstore.core.hardware.camera.domain.repository.CameraRepository
 import com.robstore.core.sync.internet.data.InternetConnectivityManager
@@ -39,6 +41,8 @@ object AppModule {
     private lateinit var robDatabaseInstance: RobDatabase
     private lateinit var userRepositoryInstance: UserRepository
 
+    private lateinit var notificationServiceInstance: INotificationService
+
 
 
 
@@ -59,6 +63,9 @@ object AppModule {
 
             robDatabaseInstance = RobDatabase.getInstance(context.applicationContext)
             userRepositoryInstance = UserRepository(robDatabaseInstance.userDao())
+
+            notificationServiceInstance = AndroidNotificationService(context.applicationContext)
+
 
             val allInterceptors = listOf(
                 TokenCaptureInterceptor(dataStoreManagerInstance),
@@ -104,6 +111,8 @@ object AppModule {
         return cameraRepositoryInstance
     }
 
+
+
     fun getLocationUseCase(): LocationUseCase {
         check(::locationUseCaseInstance.isInitialized) { "LocationUseCase no ha sido inicializado. Llama a UpdateUserAppModule.init() primero." }
         return locationUseCaseInstance
@@ -117,6 +126,11 @@ object AppModule {
     fun getUserRepository(): UserRepository {
         check(::userRepositoryInstance.isInitialized) { "UserRepository no ha sido inicializado. Llama a AppModule.init() primero." }
         return userRepositoryInstance
+    }
+
+    fun getNotificationService(): INotificationService {
+        check(::notificationServiceInstance.isInitialized) { "NotificationService no ha sido inicializado. Llama a AppModule.init() primero." }
+        return notificationServiceInstance
     }
 
 }

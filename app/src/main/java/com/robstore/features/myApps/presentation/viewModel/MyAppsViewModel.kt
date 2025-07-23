@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.utils.ImageUtils
 import com.robstore.features.myApps.domain.model.App
+import com.robstore.features.myApps.domain.useCase.MyAppsNotificationsUseCase
 import com.robstore.features.myApps.domain.useCase.MyAppsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
 
 class MyAppsViewModel(
     private val myAppsUseCase: MyAppsUseCase,
-    private val applicationContext: Context // Inyecta el contexto de la aplicación
+    private val myAppsNotificationsUseCase: MyAppsNotificationsUseCase,
+    private val applicationContext: Context
 ) : ViewModel() {
 
     private val _myAppsList = MutableStateFlow<List<App>>(emptyList())
@@ -110,7 +112,7 @@ class MyAppsViewModel(
         newScreenshotUris: List<Uri>
     ) {
         viewModelScope.launch {
-            _appUpdateUiState.value = GeneralUiState.Loading // Inicia el estado de carga
+            _appUpdateUiState.value = GeneralUiState.Loading
             _myAppsError.value = null // Limpiar errores previos
 
             try {
@@ -121,7 +123,6 @@ class MyAppsViewModel(
                     ImageUtils.processImageForUpload(applicationContext, uri)
                 }
 
-                // Llamar al caso de uso para actualizar la app y subir archivos
                 val result = myAppsUseCase.updateApp(
                     updatedApp,
                     iconBytes,
@@ -132,6 +133,7 @@ class MyAppsViewModel(
                 if (result.isSuccess) {
                     _appUpdateUiState.value = GeneralUiState.Success // Éxito (puedes definir un SuccessType específico si lo necesitas)
                     fetchMyApps() // Refrescar la lista después de la actualización
+
                     Log.d("MyAppsViewModel", "Aplicación actualizada con éxito: ${updatedApp.name}")
                 } else {
                     _appUpdateUiState.value = GeneralUiState.Error(result.exceptionOrNull()?.message ?: "Error desconocido al actualizar la aplicación.")
@@ -172,6 +174,7 @@ class MyAppsViewModel(
                 if (result.isSuccess) {
                     _addUpdateAppUiState.value = GeneralUiState.Success
                     fetchMyApps()
+                    myAppsNotificationsUseCase.showAppAddedOrUpdatedSuccess(newApp.name)
                     Log.d("MyAppsViewModel", "Aplicación añadida con éxito")
                 } else {
                     _addUpdateAppUiState.value = GeneralUiState.Error(result.exceptionOrNull()?.message ?: "Error desconocido al añadir la aplicación.")

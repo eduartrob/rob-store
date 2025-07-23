@@ -191,6 +191,7 @@ fun AppAddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
+                enabled = addAppUiState !is GeneralUiState.Loading,
                 onClick = { iconPickerLauncher.launch("image/*") },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007aff))
             ) {
@@ -216,6 +217,7 @@ fun AppAddScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
+            enabled = addAppUiState !is GeneralUiState.Loading,
             value = appName,
             onValueChange = { addAppViewModel.onNameChange(it) },
             modifier = Modifier
@@ -239,6 +241,7 @@ fun AppAddScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
+            enabled = addAppUiState !is GeneralUiState.Loading,
             value = appDescription,
             onValueChange = { addAppViewModel.onDescriptionChange(it) },
             modifier = Modifier
@@ -264,6 +267,7 @@ fun AppAddScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
+            enabled = addAppUiState !is GeneralUiState.Loading,
             value = appVersion,
             onValueChange = { addAppViewModel.onVersionChange(it) },
             modifier = Modifier
@@ -296,6 +300,7 @@ fun AppAddScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             OutlinedButton(
+                enabled = addAppUiState !is GeneralUiState.Loading,
                 onClick = { apkPickerLauncher.launch("application/vnd.android.package-archive") },
                 border = BorderStroke(1.dp, Color(0xFF007aff)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF007aff)),
@@ -340,6 +345,7 @@ fun AppAddScreen(
             }
             item {
                 OutlinedButton(
+                    enabled = addAppUiState !is GeneralUiState.Loading,
                     onClick = { screenshotPickerLauncher.launch("image/*") },
                     modifier = Modifier.size(100.dp),
                     border = BorderStroke(1.dp, Color.Gray),
@@ -374,7 +380,7 @@ fun AppAddScreen(
                 Text("Cancelar", fontSize = 16.sp, color = Color(0xFF007aff))
             }
             Button(
-                onClick = { addAppViewModel.validateAndSaveApp(onSave) },enabled = addAppUiState !is GeneralUiState.Loading, // Deshabilita el botón durante la carga
+                onClick = { addAppViewModel.validateAndSaveApp(onSave) },enabled = addAppUiState !is GeneralUiState.Loading,
                 modifier = Modifier.weight(1f).height(50.dp).padding(horizontal = 4.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF007aff),
@@ -384,10 +390,10 @@ fun AppAddScreen(
             ) {
                 if (addAppUiState is GeneralUiState.Loading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(9.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text("Guardando...", fontSize = 16.sp)
                 } else {
-                    Text("Añadir Aplicación", fontSize = 16.sp)
+                    Text("Añadir", fontSize = 16.sp)
                 }
             }
         }
