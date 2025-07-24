@@ -4,12 +4,14 @@ package com.robstore.features.myApps.data.datasource
 import com.robstore.features.home.data.model.AppFilesResponseDTO
 import com.robstore.features.myApps.data.model.AppDTO
 import com.robstore.features.myApps.data.model.CreateAppResponseDTO
+import com.robstore.features.myApps.data.model.DeleteAppDTO
 import com.robstore.features.myApps.data.model.GetDataFilesCreateAppResponseDTO
 import com.robstore.features.myApps.data.model.UpdateApp
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -42,4 +44,10 @@ interface MyAppsService {
         @Part screenshots: List<MultipartBody.Part>?,
         @Part screenshotsToKeep: MultipartBody.Part?
     ): Response<GetDataFilesCreateAppResponseDTO>
+
+    @DELETE("/api/apps/delete/{appId}")
+    suspend fun deleteApp(@Path("appId") appId: String): Response<DeleteAppDTO>
+
+    @DELETE("/api/s3/delete-app-files/{appId}")
+    suspend fun deleteFilesApp(@Path("appId") appId: String): Response<DeleteAppDTO>
 }

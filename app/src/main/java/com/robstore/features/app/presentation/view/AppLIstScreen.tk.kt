@@ -65,22 +65,18 @@ fun AppListScreen(
             when (currentAppFeatureScreen) {
                 AppFeatureScreen.AppListContent -> {
                     AppListContent(
-                        // Mapea la lista de dominio (App) a tu modelo de UI (AppInfo)
                         appList = appList.map { app ->
                             AppInfo(
-                                id = app.id, // ID de la app
+                                id = app.id,
                                 name = app.name,
                                 description = app.description,
-                                // Accede a los detalles anidados con el operador de seguridad '?'
                                 iconUrl = app.filesDetails?.iconUrl ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon",
                                 rate = (app.uiDetails?.rate ?: 0.0).toString(),
-                                size = app.uiDetails?.size ?: "N/A" // Tamaño, con valor por defecto
+                                size = app.uiDetails?.size ?: "N/A"
                             )
                         },
                         onAppSelected = { appInfo ->
-                            // Cuando se selecciona una AppInfo, busca el App original en la lista
-                            // y navega al detalle con el modelo de dominio App
-                            val selectedApp = appList.find { it.id == appInfo.id } // Usa el ID para una búsqueda más robusta
+                            val selectedApp = appList.find { it.id == appInfo.id }
                             selectedApp?.let {
                                 currentAppFeatureScreen = AppFeatureScreen.AppDetailScreen(it)
                             }
@@ -88,7 +84,6 @@ fun AppListScreen(
                     )
                 }
                 is AppFeatureScreen.AppDetailScreen -> {
-                    // AppDetailScreen espera un objeto 'App' de dominio
                     AppDetailScreen(
                         app = (currentAppFeatureScreen as AppFeatureScreen.AppDetailScreen).app,
                         homeViewModel = homeViewModel, // <-- ¡Pasa la instancia del ViewModel existente!

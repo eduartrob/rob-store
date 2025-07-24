@@ -247,15 +247,14 @@ fun AppEditScreen(
             onValueChange = { editAppViewModel.onDescriptionChange(it) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
                 .padding(bottom = 16.dp),
             minLines = 3,
-            maxLines = 5
+            maxLines = 20
         )
         when (descriptionValidationState) {
             is AppValidationState.Empty -> Text("La descripción es obligatoria.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             is AppValidationState.TooShort -> Text("La descripción es muy corta (mín. 10).", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            is AppValidationState.TooLong -> Text("La descripción es muy larga (máx. 500).", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            is AppValidationState.TooLong -> Text("La descripción es muy larga (máx. 4000).", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             else -> Unit
         }
         Spacer(modifier = Modifier.height(12.dp))

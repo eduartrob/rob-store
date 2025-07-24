@@ -160,6 +160,7 @@ class LoginViewModel(
                 )
                 _loginUiState.value = GeneralUiState.Success
             }.onFailure { exception ->
+
                 _emailValidationState.value = EmailValidationState.Error
                 _passwordValidationState.value = PasswordValidationState.Invalid
                 Log.e("LoginViewModel", "Error en login: ${exception.message}")

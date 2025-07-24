@@ -2,6 +2,7 @@ package com.robstore.features.myApps.domain.useCase
 
 import android.util.Log
 import com.robstore.features.myApps.domain.model.App
+import com.robstore.features.myApps.domain.model.DeleteApp
 import com.robstore.features.myApps.domain.repository.MyAppsRepository
 
 class MyAppsUseCase(
@@ -32,5 +33,10 @@ class MyAppsUseCase(
         screenshotBytesList: List<ByteArray>
     ): Result<App>{
         return myAppsRepository.createApp(createApp, iconBytes, apkBytes, screenshotBytesList)
+    }
+
+
+    suspend fun deleteApp(idApp: String): Result<DeleteApp>{
+        return myAppsRepository.deleteApp(idApp)
     }
 }

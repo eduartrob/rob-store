@@ -20,11 +20,10 @@ fun AppListContent(
 ) {
     LazyColumn(
         modifier = Modifier
-            .padding(horizontal = 18.dp, vertical = 10.dp)
+            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 0.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(7.dp)
     ) {
-        items(items = appList, key = { it.id }) { app -> // Usa app.id como la clave única
+        items(items = appList, key = { it.id }) { app ->
             AppCard(app = app, onClick = onAppSelected)
         }
     }

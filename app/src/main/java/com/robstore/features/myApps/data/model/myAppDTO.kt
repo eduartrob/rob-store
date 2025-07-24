@@ -35,3 +35,7 @@ data class GetDataFilesCreateAppResponseDTO(
     val message: String,
     val filesApp: AppFilesDetailsDTO
 )
+
+data class DeleteAppDTO(
+    val message: String
+)

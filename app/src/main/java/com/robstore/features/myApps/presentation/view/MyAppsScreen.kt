@@ -214,7 +214,7 @@ fun MyAppsScreen(
             text = { Text("¿Estás seguro de que quieres eliminar '${app.name}'?") },
             confirmButton = {
                 TextButton(onClick = {
-                    app.id?.let { myAppsViewModel.deleteApp(it) }
+                    app.id.let { myAppsViewModel.deleteApp(app) }
                     appToDelete = null
                     myAppsViewModel.resetAppUiState()
                 }) {

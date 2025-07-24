@@ -96,9 +96,23 @@ class MyAppsViewModel(
         }
     }
 
-    fun deleteApp(appId: String) {
+    fun deleteApp(app: App) {
         viewModelScope.launch {
-            Log.d("MyAppsViewModel", "Solicitud de eliminación para app $appId")
+            _appUiState.value = GeneralUiState.Loading
+            Log.d("MyAppsViewModel", "Solicitud de eliminación para app ${app.name}")
+
+            myAppsUseCase.deleteApp(app.id)
+                .onSuccess { deleteAppResult ->
+                    Log.d("MyAppsViewModel", "App ${app.name} eliminada exitosamente. Mensaje: ${deleteAppResult.message}")
+                    _appUiState.value = GeneralUiState.Success
+                    fetchMyApps()
+                    myAppsNotificationsUseCase.showAppDeleteSuccess(app.name)
+                }
+                .onFailure { exception ->
+                    val errorMessage = exception.message ?: "Error desconocido al eliminar la aplicación."
+                    Log.e("MyAppsViewModel", "Error al eliminar la app ${app.name}: $errorMessage", exception)
+                    _appUiState.value = GeneralUiState.Error(errorMessage)
+                }
         }
     }
 
@@ -243,7 +257,7 @@ class MyAppsViewModel(
 
                 if (result.isSuccess) {
                     _appUiState.value = GeneralUiState.Success
-                    myAppsNotificationsUseCase.showAppAddedOrUpdatedSuccess(newApp.name)
+                    myAppsNotificationsUseCase.showAppAddSuccess(newApp.name)
                     fetchMyApps()
                     Log.d("MyAppsViewModel", "Aplicación añadida con éxito")
                 } else {

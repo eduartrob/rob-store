@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp // Importa sp para el tamaño de la fuente
 import coil.compose.rememberAsyncImagePainter
@@ -173,7 +174,10 @@ fun PopApp(
                 Text(
                     text = app.description, // Accede a description directamente del modelo App
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.DarkGray
+                    color = Color.DarkGray,
+                    minLines = 3,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

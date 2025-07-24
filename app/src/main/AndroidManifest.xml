@@ -22,6 +22,8 @@
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+<!--Para usarlo localmente colocar antes de tools-->
+    <!--        android:networkSecurityConfig="@xml/network_security_config"-->
 
 
     <application
@@ -33,7 +35,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RobStore"
-        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
 
 

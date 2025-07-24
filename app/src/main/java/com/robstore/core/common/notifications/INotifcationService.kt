@@ -5,4 +5,5 @@ interface INotificationService {
     fun showError(message: String, title: String = "Error")
     fun showWarning(message: String)
     fun showInfo(message: String)
+    fun showInfoDeleteApps(message: String)
 }

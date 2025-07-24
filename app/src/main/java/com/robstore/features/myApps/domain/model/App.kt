@@ -24,3 +24,7 @@ data class App(
     val filesDetails: AppFilesDetails? = null,
     val uiDetails: AppUIDetails? = null
 )
+
+data class DeleteApp(
+    val message: String
+)

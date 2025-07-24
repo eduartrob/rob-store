@@ -69,7 +69,7 @@ class EditAppViewModel : ViewModel(){
     private val MIN_NAME_LENGTH = 7
     private val MAX_NAME_LENGTH = 50
     private val MIN_DESCRIPTION_LENGTH = 10
-    private val MAX_DESCRIPTION_LENGTH = 500
+    private val MAX_DESCRIPTION_LENGTH = 4000
     private val MAX_SCREENSHOTS = 5
 
 
@@ -121,12 +121,6 @@ class EditAppViewModel : ViewModel(){
         _selectedScreenshots.value = _selectedScreenshots.value.filter { it != uri }
         _screenshotsValidationState.value = null
     }
-
-    fun clearScreenshots() {
-        _selectedScreenshots.value = emptyList()
-        _screenshotsValidationState.value = null
-    }
-
 
 
     fun initializeFromApp(app: App) {

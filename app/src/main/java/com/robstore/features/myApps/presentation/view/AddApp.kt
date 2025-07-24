@@ -26,6 +26,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -34,11 +35,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
@@ -227,16 +230,15 @@ fun AppAddScreen(
             onValueChange = { addAppViewModel.onDescriptionChange(it) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
                 .padding(bottom = 16.dp),
             minLines = 3,
-            maxLines = 5,
+            maxLines = 20,
             isError = descriptionValidationState != null && descriptionValidationState !is AppValidationState.Valid
         )
         when (descriptionValidationState) {
             is AppValidationState.Empty -> Text("La descripción es obligatoria.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             is AppValidationState.TooShort -> Text("La descripción es muy corta (mín. 10).", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            is AppValidationState.TooLong -> Text("La descripción es muy larga (máx. 500).", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            is AppValidationState.TooLong -> Text("La descripción es muy larga (máx. 4000).", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             else -> Unit
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -314,36 +316,57 @@ fun AppAddScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             items(selectedScreenshots) { uri ->
-                Image(
-                    painter = rememberAsyncImagePainter(model = uri),
-                    contentDescription = "Captura de pantalla",
+                Box(
                     modifier = Modifier
                         .size(100.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray),
-                    contentScale = ContentScale.Crop
-                )
+                        .background(Color.LightGray)
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = uri),
+                        contentDescription = "Captura de pantalla",
+                        modifier = Modifier.matchParentSize(), // Ocupa todo el Box
+                        contentScale = ContentScale.Crop
+                    )
+                    IconButton(
+                        onClick = { addAppViewModel.removeScreenshot(uri) },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd) // Alinea en la esquina superior derecha
+                            .padding(4.dp) // Pequeño padding desde el borde
+                            .size(24.dp) // Tamaño del botón
+                            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50)) // Fondo semitransparente circular
+                            .clip(RoundedCornerShape(50)), // Para que el fondo sea perfectamente circular
+                        enabled = addUpdateAppUiState !is GeneralUiState.Loading // Deshabilitar si está cargando
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close, // Icono de 'X'
+                            contentDescription = "Eliminar captura",
+                            tint = Color.White, // Color del icono
+                            modifier = Modifier.size(16.dp) // Tamaño del icono dentro del botón
+                        )
+                    }
+                }
             }
             item {
-                OutlinedButton(
-                    enabled = addUpdateAppUiState !is GeneralUiState.Loading,
-                    onClick = { screenshotPickerLauncher.launch("image/*") },
-                    modifier = Modifier.size(100.dp),
-                    border = BorderStroke(1.dp, Color.Gray),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
-                ) {
-                    Icon(imageVector = Icons.Filled.AddCircleOutline, contentDescription = "Añadir captura")
+                // Solo mostrar el botón de añadir si no se ha alcanzado el límite máximo de capturas
+                if (selectedScreenshots.size < 5) {
+                    OutlinedButton(
+                        enabled = addUpdateAppUiState !is GeneralUiState.Loading,
+                        onClick = { screenshotPickerLauncher.launch("image/*") },
+                        modifier = Modifier.size(100.dp),
+                        border = BorderStroke(1.dp, Color.Gray),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
+                    ) {
+                        Icon(imageVector = Icons.Filled.AddCircleOutline, contentDescription = "Añadir captura")
+                    }
                 }
             }
         }
-        if (screenshotsValidationState is AppValidationState.NotSelected) {
-            Text(
-                text = "Debes seleccionar al menos una captura de pantalla.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+        when (screenshotsValidationState) {
+            AppValidationState.NotSelected -> Text("Debes seleccionar al menos una captura de pantalla.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            AppValidationState.TooMany -> Text("Solo puedes subir un máximo de 5 capturas de pantalla.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            else -> Unit
         }
         Spacer(modifier = Modifier.height(16.dp))
 

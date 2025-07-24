@@ -194,7 +194,6 @@ fun Home(
         if (currentScreen is HomeScreen.AppList && isAppListContentShowing) {
             Column(
                 modifier = Modifier
-                    .background(headerColor)
                     .fillMaxWidth()
                     .height(70.dp)
                     .drawBehind {
@@ -223,10 +222,8 @@ fun Home(
 
         Column(
             modifier = Modifier
-                .background(headerColor)
                 .fillMaxWidth()
                 .weight(1f),
-
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
 

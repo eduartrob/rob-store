@@ -8,4 +8,10 @@ class MyAppsNotificationsUseCase(
     fun showAppAddedOrUpdatedSuccess(appName: String) {
         notificationService.showSuccess("La aplicación '$appName' se ha guardado correctamente.")
     }
+    fun showAppAddSuccess(appName: String){
+        notificationService.showSuccess("La aplicación '$appName' se ha creado correctamente.")
+    }
+    fun showAppDeleteSuccess(appName: String){
+        notificationService.showInfoDeleteApps("La aplicación '$appName' se ha borrado.")
+    }
 }

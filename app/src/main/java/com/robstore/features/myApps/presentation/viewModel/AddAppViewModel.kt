@@ -69,7 +69,9 @@ class AddAppViewModel: ViewModel() {
     private val MIN_NAME_LENGTH = 7
     private val MAX_NAME_LENGTH = 50
     private val MIN_DESCRIPTION_LENGTH = 10
-    private val MAX_DESCRIPTION_LENGTH = 500
+    private val MAX_DESCRIPTION_LENGTH = 4000
+    private val MAX_SCREENSHOTS = 5
+
 
 
     // --- Funciones de cambio de valor para los campos ---
@@ -98,14 +100,38 @@ class AddAppViewModel: ViewModel() {
         _apkValidationState.value = null
     }
 
-    fun onScreenshotsSelected(uris: List<Uri>) {
-        _selectedScreenshots.value = _selectedScreenshots.value + uris
-        _screenshotsValidationState.value = null
+    fun onScreenshotsSelected(newUris: List<Uri>) {
+        val currentScreenshots = _selectedScreenshots.value.toMutableList()
+
+        val combinedList = (currentScreenshots + newUris).distinct()
+        _selectedScreenshots.value = combinedList.take(MAX_SCREENSHOTS)
+
+        if (_selectedScreenshots.value.size > MAX_SCREENSHOTS) {
+            _screenshotsValidationState.value = AppValidationState.TooMany
+        } else if (_selectedScreenshots.value.isEmpty()){
+            _screenshotsValidationState.value = AppValidationState.NotSelected
+        }
+        else {
+            _screenshotsValidationState.value = AppValidationState.Valid
+        }
+
+        Log.d("AddAppViewModel", "Selected screenshots count: ${_selectedScreenshots.value.size}")
+        _selectedScreenshots.value.forEachIndexed { index, uri ->
+            Log.d("AddAppViewModel", "Screenshot $index: $uri")
+        }
     }
 
-    fun clearScreenshots() {
-        _selectedScreenshots.value = emptyList()
-        _screenshotsValidationState.value = null
+    fun removeScreenshot(uri: Uri) {
+        _selectedScreenshots.value = _selectedScreenshots.value.filter { it != uri }
+        // Si se elimina una captura, la validación vuelve a ser válida o nula si estaba en "TooMany"
+        if (_screenshotsValidationState.value == AppValidationState.TooMany && _selectedScreenshots.value.size <= MAX_SCREENSHOTS) {
+            _screenshotsValidationState.value = AppValidationState.Valid
+        } else if (_selectedScreenshots.value.isEmpty()) { // Si al borrar se queda vacío
+            _screenshotsValidationState.value = AppValidationState.NotSelected
+        }
+        else {
+            _screenshotsValidationState.value = null
+        }
     }
 
 
@@ -183,12 +209,19 @@ class AddAppViewModel: ViewModel() {
     }
 
     private fun validateScreenshots(): Boolean {
-        return if (_selectedScreenshots.value.isEmpty()) {
-            _screenshotsValidationState.value = AppValidationState.NotSelected
-            false
-        } else {
-            _screenshotsValidationState.value = AppValidationState.Valid
-            true
+        return when {
+            _selectedScreenshots.value.isEmpty() -> {
+                _screenshotsValidationState.value = AppValidationState.NotSelected
+                false
+            }
+            _selectedScreenshots.value.size > MAX_SCREENSHOTS -> {
+                _screenshotsValidationState.value = AppValidationState.TooMany // Nuevo estado
+                false
+            }
+            else -> {
+                _screenshotsValidationState.value = AppValidationState.Valid
+                true
+            }
         }
     }
 

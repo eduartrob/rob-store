@@ -2,6 +2,7 @@ package com.robstore.features.app.presentation.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,6 +40,7 @@ import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -53,6 +56,17 @@ import com.robstore.R
 import com.robstore.features.app.domain.model.AppInfo
 import com.robstore.features.home.domain.model.App
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 
 
 @Composable
@@ -63,13 +77,14 @@ fun AppDetailScreen(
 ) {
     val colorGeneral = Color(0xFFf0f3f8)
 
-    // Observa los estados de los archivos de la app seleccionada
     val selectedAppFiles by homeViewModel.selectedAppFiles.collectAsState()
     val appFilesLoading by homeViewModel.appFilesLoading.collectAsState()
     val appFilesError by homeViewModel.appFilesError.collectAsState()
 
-    // Dispara la carga de los archivos de la app cuando la pantalla se componga
-    LaunchedEffect(app.id) { // Usa app.id como key para que se recargue si cambia la app
+    var expanded by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(app.id) {
         homeViewModel.fetchAppFiles(app.id)
     }
 
@@ -80,7 +95,9 @@ fun AppDetailScreen(
             .fillMaxSize()
             .background(Color(0xFFf0f3f8))
             .padding(horizontal = 18.dp)
-    ) {
+            .verticalScroll(rememberScrollState()),
+
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -100,7 +117,9 @@ fun AppDetailScreen(
         }
         Spacer(modifier = Modifier.height(10.dp))
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .padding(6.dp)
+                .fillMaxWidth()
         ) {
             // --- Carga del icono de la app ---
             Image(
@@ -116,8 +135,8 @@ fun AppDetailScreen(
             Text(
                 text = displayApp.name,
                 style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                fontSize = 25.sp,
+                fontWeight = FontWeight.Normal,
+                fontSize = 23.sp,
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(48.dp))
@@ -144,7 +163,9 @@ fun AppDetailScreen(
             else -> {
                 // Contenido de los detalles de la app (rate, size, description)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -186,7 +207,7 @@ fun AppDetailScreen(
                     onClick = { /* Acción de instalar */ },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 5.dp),
+                        .padding(vertical = 10.dp),
                     shape = RoundedCornerShape(30.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2370ed),
@@ -197,13 +218,15 @@ fun AppDetailScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = colorGeneral
                     )
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column {
                         Text(
                             text = "Acerca de esta app:",
                             style = MaterialTheme.typography.titleMedium,
@@ -212,56 +235,67 @@ fun AppDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = displayApp.description, // Usa displayApp.description
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.DarkGray
+                            text = buildAnnotatedString {
+                                append(displayApp.description)
+
+                                if (!expanded && displayApp.description.length > 100) {
+                                    withStyle(
+                                        style = SpanStyle(
+                                            color = Color(0xFFc1c7c6),
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp
+                                        )
+                                    ) {
+                                        append(" ...Más")
+                                    }
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.DarkGray),
+                            maxLines = if (expanded) Int.MAX_VALUE else 7,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.clickable {
+                                if (displayApp.description.length > 6) {
+                                    expanded = !expanded
+                                }
+                            }
                         )
                     }
                 }
-
-                // TODO: Aquí podrías añadir un LazyRow para mostrar las screenshots
-                if (!displayApp.filesDetails?.screenshots.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Capturas de pantalla:",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
+                Card(
+                    modifier = Modifier
+                        .padding(6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorGeneral
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // Ejemplo de LazyRow para screenshots
-                    // LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    //     items(displayApp.filesDetails.screenshots!!) { screenshotUrl ->
-                    //         Image(
-                    //             painter = rememberAsyncImagePainter(model = screenshotUrl),
-                    //             contentDescription = "Screenshot",
-                    //             modifier = Modifier
-                    //                 .size(200.dp, 120.dp) // Ajusta el tamaño
-                    //                 .clip(RoundedCornerShape(8.dp)),
-                    //             contentScale = ContentScale.Crop
-                    //         )
-                    //     }
-                    // }
+                ) {
+                    if (!displayApp.filesDetails?.screenshots.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Capturas de pantalla:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(items = displayApp.filesDetails?.screenshots!!) { screenshotUrl ->
+                                Image(
+                                    painter = rememberAsyncImagePainter(model = screenshotUrl),
+                                    contentDescription = "Screenshot",
+                                    modifier = Modifier
+                                        .size(300.dp, 533.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
                 }
+
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
 
-//// --- Función de Previsualización ---
-//@Preview(showBackground = true) // showBackground muestra un fondo, showSystemUi simula la barra de estado/navegación
-//@Composable
-//fun PreviewAppDetailScreen() {
-//    MaterialTheme { // Siempre envuelve tus Previews en el tema de tu app
-//        // Datos de ejemplo para la previsualización
-//        val sampleApp = AppInfo("Facebook",
-//            iconResId =  R.drawable.logo,  "Conecta con amigos y familiares.",
-//            rate = 4.3, size = "23 MB"
-//        )
-//
-//        AppDetailScreen(
-//            app = sampleApp,
-//            onBack = { /* No hace nada en Preview */ }
-//        )
-//    }
-//}

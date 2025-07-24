@@ -1,6 +1,7 @@
 package com.robstore.features.myApps.domain.repository
 
 import com.robstore.features.myApps.domain.model.App
+import com.robstore.features.myApps.domain.model.DeleteApp
 
 
 interface MyAppsRepository {
@@ -19,4 +20,5 @@ interface MyAppsRepository {
         apkBytes: ByteArray?,
         screenshotBytesList: List<ByteArray>
     ): Result<App>
+    suspend fun deleteApp(appId: String): Result<DeleteApp>
 }

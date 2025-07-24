@@ -54,16 +54,16 @@ class AndroidNotificationService(private val context: Context) : INotificationSe
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.logoprueba) // <-- ¡Necesitas un icono pequeño aquí!
-            // Usualmente es `ic_notification` o `ic_launcher_foreground`
-            .setContentTitle("RobStore - Éxito") // Título de la notificación
-            .setContentText(message) // Contenido del mensaje
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // Prioridad alta para que sea heads-up si es posible
-            .setContentIntent(pendingIntent) // Qué hacer al tocar la notificación
-            .setAutoCancel(true) // La notificación se quita automáticamente al tocarla
+            .setSmallIcon(R.drawable.logoprueba)
+            .setContentTitle("RobStore - Éxito")
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
 
         notificationManager.notify(NOTIFICATION_ID_SUCCESS, builder.build())
     }
+
 
     override fun showError(message: String, title: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -99,6 +99,17 @@ class AndroidNotificationService(private val context: Context) : INotificationSe
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("RobStore - Información")
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+        notificationManager.notify(NOTIFICATION_ID_INFO, builder.build())
+    }
+
+    override fun showInfoDeleteApps(message: String){
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Eliminación")
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)

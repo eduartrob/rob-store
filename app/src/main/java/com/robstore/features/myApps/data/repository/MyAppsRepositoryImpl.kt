@@ -8,6 +8,7 @@ import com.robstore.features.myApps.data.model.UpdateApp
 import com.robstore.features.myApps.domain.model.App // Importa tu modelo de dominio App (desde home.domain.model)
 import com.robstore.features.myApps.domain.model.AppFilesDetails // Importa AppFilesDetails (desde home.domain.model)
 import com.robstore.features.myApps.domain.model.AppUIDetails // Importa AppUIDetails (desde home.domain.model)
+import com.robstore.features.myApps.domain.model.DeleteApp
 import com.robstore.features.myApps.domain.repository.MyAppsRepository // Importa la interfaz
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -23,7 +24,6 @@ class MyAppsRepositoryImpl(
 ) : MyAppsRepository {
 
     private val gson = Gson()
-
 
     override suspend fun getMyApps(): Result<List<App>> {
         return try {
@@ -134,8 +134,6 @@ class MyAppsRepositoryImpl(
             Result.failure(e)
         }
     }
-
-
 
     override suspend fun updateApp(
         updatedApp: App,
@@ -337,6 +335,61 @@ class MyAppsRepositoryImpl(
         } catch (e: Exception) {
             Log.e("MyAppsRepositoryImpl", "Excepción al añadir app: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteApp(appId: String): Result<DeleteApp> {
+        return try {
+            // 1. Intentar borrar los archivos de S3 primero
+            val filesResponse = myAppsService.deleteFilesApp(appId)
+
+            if (filesResponse.isSuccessful) {
+                // Archivos borrados exitosamente o no había archivos (si la API devuelve 200/204 para esto)
+                // O si la respuesta es un 404 con "App not found" que tú consideras aceptable.
+                Log.d("MyAppsRepository", "Archivos de la app $appId borrados de S3 (o no existían).")
+            } else {
+                // Manejar el caso de "App not found" para los archivos de S3
+                if (filesResponse.code() == 404) {
+                    val errorBody = filesResponse.errorBody()?.string()
+                    // Aquí asumimos que tu backend devuelve un JSON con "message": "App not found."
+                    if (errorBody?.contains("App not found.", ignoreCase = true) == true) {
+                        Log.d("MyAppsRepository", "App $appId no tiene archivos en S3, continuando con el borrado de la base de datos.")
+                        // Consideramos esto un éxito "aceptable" para los archivos, no un fallo crítico.
+                    } else {
+                        // Otro tipo de error 404 o un mensaje inesperado, se considera un fallo de S3
+                        Log.e("MyAppsRepository", "Error al borrar archivos de S3 para $appId: ${filesResponse.code()} - $errorBody")
+                        return Result.failure(Exception("Error al borrar archivos de S3: ${filesResponse.code()} - $errorBody"))
+                    }
+                } else {
+                    // Otros errores que no sean 404 para los archivos de S3
+                    val errorBody = filesResponse.errorBody()?.string()
+                    Log.e("MyAppsRepository", "Error inesperado al borrar archivos de S3 para $appId: ${filesResponse.code()} - $errorBody")
+                    return Result.failure(Exception("Error al borrar archivos de S3: ${filesResponse.code()} - $errorBody"))
+                }
+            }
+
+            // 2. Si los archivos se manejaron (borrados o no existían), proceder a borrar la aplicación de la base de datos
+            val appResponse = myAppsService.deleteApp(appId)
+
+            if (appResponse.isSuccessful) {
+                val deleteAppDTO = appResponse.body()
+                if (deleteAppDTO != null) {
+                    Log.d("MyAppsRepository", "App $appId borrada exitosamente de la base de datos.")
+                    return Result.success(DeleteApp(deleteAppDTO.message))
+                } else {
+                    Log.e("MyAppsRepository", "Respuesta de borrado de app exitosa pero sin cuerpo.")
+                    return Result.failure(Exception("Respuesta vacía al borrar la aplicación."))
+                }
+            } else {
+                // Error al borrar la aplicación de la base de datos
+                val errorBody = appResponse.errorBody()?.string()
+                Log.e("MyAppsRepository", "Error al borrar la app $appId de la base de datos: ${appResponse.code()} - $errorBody")
+                return Result.failure(Exception("Error al borrar la aplicación: ${appResponse.code()} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            // Manejar excepciones de red o cualquier otra excepción inesperada
+            Log.e("MyAppsRepository", "Excepción al intentar borrar la app $appId: ${e.message}", e)
+            return Result.failure(Exception("Error inesperado: ${e.message}"))
         }
     }
 }
