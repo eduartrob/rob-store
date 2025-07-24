@@ -3,7 +3,6 @@ package com.robstore.features.home.presentation.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.robstore.core.di.HardwareModule.internetConnectivityUseCase
 import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.core.hardware.location.domain.useCase.LocationUseCase
 import com.robstore.core.store.local.dataStore.DataStoreManager
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay // Added for simulation
 
 class HomeViewModel(
     private val locationUseCase: LocationUseCase,
@@ -44,6 +44,23 @@ class HomeViewModel(
     private val _appFilesError = MutableStateFlow<String?>(null)
     val appFilesError: StateFlow<String?> = _appFilesError.asStateFlow()
 
+    private var hasLoadedApps = false // This flag is for initial load, not for refresh
+
+    // NEW: State for pull-to-refresh indicator
+    private val _isAppListRefreshing = MutableStateFlow(false)
+    val isAppListRefreshing: StateFlow<Boolean> = _isAppListRefreshing.asStateFlow()
+
+
+    init {
+        viewModelScope.launch {
+            dataStoreManager.getKey(PreferenceKeys.USER_REGION).collectLatest { region ->
+                _country.value = region
+            }
+        }
+
+        fetchApps(isInitialLoad = true)
+    }
+
 
     fun requestAndSaveCountry() {
         viewModelScope.launch {
@@ -67,7 +84,6 @@ class HomeViewModel(
                 if(result.isSuccess) {
                     val newUrl = result.getOrNull()?.imgProfile
 
-                    // Obtener el valor actual del DataStore de forma "one-shot"
                     val localUrl = dataStoreManager.getKey(PreferenceKeys.USER_PROFILE_PICTURE_URI).first()
 
 
@@ -91,22 +107,22 @@ class HomeViewModel(
     }
 
 
-    fun fetchApps() {
+    fun fetchApps(isInitialLoad: Boolean = false) {
+        if (isInitialLoad && hasLoadedApps) return
+
         viewModelScope.launch {
             _appsLoading.value = true
             _appsError.value = null
 
-
             try {
-                // 1. Obtener la lista básica de aplicaciones
+                delay(1000L)
+
                 val basicAppsResult = homeUseCase.getAllApps()
                 if (basicAppsResult.isSuccess) {
                     val basicApps = basicAppsResult.getOrNull() ?: emptyList()
                     val enrichedApps = mutableListOf<App>()
 
-                    // 2. Para cada aplicación, obtener sus archivos y combinarlos
                     for (basicApp in basicApps) {
-                        // Llama a homeUseCase.getAppFiles(appId)
                         val appFilesResult = homeUseCase.getAppFiles(basicApp.id)
                         if (appFilesResult.isSuccess) {
                             val appWithFiles = appFilesResult.getOrNull()
@@ -127,6 +143,7 @@ class HomeViewModel(
                     }
                     _appList.value = enrichedApps
                     Log.d("HomeViewModel", "Aplicaciones y sus archivos cargados con éxito: ${_appList.value.size}")
+                    hasLoadedApps = true
                 } else {
                     _appsError.value = basicAppsResult.exceptionOrNull()?.message ?: "Error desconocido al cargar las aplicaciones."
                     Log.e("HomeViewModel", "Error al cargar aplicaciones básicas:", basicAppsResult.exceptionOrNull())
@@ -140,6 +157,16 @@ class HomeViewModel(
         }
     }
 
+    fun refreshApps() {
+        viewModelScope.launch {
+            _isAppListRefreshing.value = true
+            _appsError.value = null
+            fetchApps()
+            delay(500L)
+            _isAppListRefreshing.value = false
+        }
+    }
+
     fun fetchAppFiles(appId: String) {
         viewModelScope.launch {
             _appFilesLoading.value = true
@@ -147,7 +174,6 @@ class HomeViewModel(
             _selectedAppFiles.value = null
 
             try {
-                // Llama a homeUseCase.getAppFiles(appId)
                 val result = homeUseCase.getAppFiles(appId)
                 if (result.isSuccess) {
                     val appWithFiles = result.getOrNull()

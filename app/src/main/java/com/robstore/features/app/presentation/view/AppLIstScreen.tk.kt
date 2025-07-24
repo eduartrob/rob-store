@@ -20,15 +20,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.robstore.features.app.domain.model.AppInfo
-import com.robstore.features.app.presentation.state.AppFeatureScreen // Import the new state class
+import com.robstore.features.app.presentation.state.AppFeatureScreen // Importa la nueva clase de estado
 import com.robstore.features.home.presentation.viewModel.HomeViewModel
 
+// Importaciones para Material 3 PullToRefresh
+import androidx.compose.material3.ExperimentalMaterial3Api // Necesario para PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox // Importa PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState // Importa rememberPullToRefreshState
 
+
+@OptIn(ExperimentalMaterial3Api::class) // Anotación necesaria para usar PullToRefreshBox
 @Composable
 fun AppListScreen(
-    onBackToHomeDashboard: () -> Unit,
+    onBackToHomeDashboard: () -> Unit, // Este callback parece no usarse en AppListContent directamente.
     onSubScreenChanged: (Boolean) -> Unit,
-    homeViewModel: HomeViewModel = viewModel()
+    homeViewModel: HomeViewModel = viewModel() // Pasa el ViewModel para acceder al estado de refresco
 ) {
     val appList by homeViewModel.appList.collectAsState()
     val appsLoading by homeViewModel.appsLoading.collectAsState()
@@ -36,59 +42,70 @@ fun AppListScreen(
 
     var currentAppFeatureScreen by remember { mutableStateOf<AppFeatureScreen>(AppFeatureScreen.AppListContent) }
 
+    val isAppListRefreshing by homeViewModel.isAppListRefreshing.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
+
     LaunchedEffect(currentAppFeatureScreen) {
         onSubScreenChanged(currentAppFeatureScreen is AppFeatureScreen.AppListContent)
     }
 
-    LaunchedEffect(Unit) {
-        homeViewModel.fetchApps()
-    }
+//    LaunchedEffect(Unit) {
+//         homeViewModel.fetchApps()
+//    }
 
-    when {
-        appsLoading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+    PullToRefreshBox(
+        state = pullToRefreshState,
+        isRefreshing = isAppListRefreshing,
+        onRefresh = {
+            homeViewModel.refreshApps()
         }
-        appsError != null -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "Error al cargar apps: $appsError",
-                    color = Color(0xFFc1c7c6),
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(16.dp)
-                )
+    ) {
+        when {
+            appsLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-        }
-        else -> {
-            when (currentAppFeatureScreen) {
-                AppFeatureScreen.AppListContent -> {
-                    AppListContent(
-                        appList = appList.map { app ->
-                            AppInfo(
-                                id = app.id,
-                                name = app.name,
-                                description = app.description,
-                                iconUrl = app.filesDetails?.iconUrl ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon",
-                                rate = (app.uiDetails?.rate ?: 0.0).toString(),
-                                size = app.uiDetails?.size ?: "N/A"
-                            )
-                        },
-                        onAppSelected = { appInfo ->
-                            val selectedApp = appList.find { it.id == appInfo.id }
-                            selectedApp?.let {
-                                currentAppFeatureScreen = AppFeatureScreen.AppDetailScreen(it)
-                            }
-                        }
+            appsError != null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Error al cargar apps: $appsError",
+                        color = Color(0xFFc1c7c6),
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
-                is AppFeatureScreen.AppDetailScreen -> {
-                    AppDetailScreen(
-                        app = (currentAppFeatureScreen as AppFeatureScreen.AppDetailScreen).app,
-                        homeViewModel = homeViewModel, // <-- ¡Pasa la instancia del ViewModel existente!
-                        onBack = { currentAppFeatureScreen = AppFeatureScreen.AppListContent }
-                    )
+            }
+            else -> {
+                when (currentAppFeatureScreen) {
+                    AppFeatureScreen.AppListContent -> {
+                        AppListContent(
+                            appList = appList.map { app ->
+                                AppInfo(
+                                    id = app.id,
+                                    name = app.name,
+                                    description = app.description,
+                                    iconUrl = app.filesDetails?.iconUrl ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon",
+                                    rate = (app.uiDetails?.rate ?: 0.0).toString(),
+                                    size = app.uiDetails?.size ?: "N/A"
+                                )
+                            },
+                            onAppSelected = { appInfo ->
+                                val selectedApp = appList.find { it.id == appInfo.id }
+                                selectedApp?.let {
+                                    currentAppFeatureScreen = AppFeatureScreen.AppDetailScreen(it)
+                                }
+                            }
+                        )
+                    }
+                    is AppFeatureScreen.AppDetailScreen -> {
+                        AppDetailScreen(
+                            app = (currentAppFeatureScreen as AppFeatureScreen.AppDetailScreen).app,
+                            homeViewModel = homeViewModel,
+                            onBack = { currentAppFeatureScreen = AppFeatureScreen.AppListContent }
+                        )
+                    }
                 }
             }
         }

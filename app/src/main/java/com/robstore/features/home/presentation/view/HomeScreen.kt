@@ -106,7 +106,6 @@ fun Home(
         } else {
             Toast.makeText(context, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
         }
-        // Ahora que terminó el permiso de ubicación, solicita el siguiente permiso:
         requestNotificationPermission = true
     }
 
@@ -133,10 +132,6 @@ fun Home(
             requestNotificationPermission = false // para no pedirlo otra vez
         }
     }
-
-
-
-
 
 
     var isFetched by remember { mutableStateOf(false) }
