@@ -39,6 +39,7 @@ interface MyAppsService {
         @Part("appId") appId: RequestBody,
         @Part icon: MultipartBody.Part?,
         @Part appFile: MultipartBody.Part?,
-        @Part screenshots: List<MultipartBody.Part>?
+        @Part screenshots: List<MultipartBody.Part>?,
+        @Part screenshotsToKeep: MultipartBody.Part?
     ): Response<GetDataFilesCreateAppResponseDTO>
 }

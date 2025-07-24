@@ -47,9 +47,6 @@ import com.robstore.features.app.domain.model.AppInfo
 import com.robstore.features.myApps.domain.model.App
 import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModel
 
-import com.robstore.features.addApp.presentation.view.AppAddScreen
-
-
 
 @Composable
 fun MyAppsScreen(
@@ -94,7 +91,10 @@ fun MyAppsScreen(
                 modifier = Modifier.weight(1f),
             )
             Spacer(modifier = Modifier.weight(0.15f))
-            IconButton(onClick = { showAddAppScreen = true }) {
+            IconButton(onClick = {
+                myAppsViewModel.resetAppUiState()
+                showAddAppScreen = true
+            }) {
                 Icon(
                     imageVector = Icons.Filled.AddCircleOutline,
                     contentDescription = "Añadir aplicación",
@@ -137,7 +137,7 @@ fun MyAppsScreen(
                                     ?: "https://placehold.co/50x50/cccccc/ffffff?text=Icon",
                                 rate = app.rate.toString(),
                                 size = app.uiDetails?.size ?: "N/A",
-                                id = null.toString()
+                                id = app.id ?: ""
                             ),
                             onClick = { selectedAppForDetail = app }
                         )
@@ -165,7 +165,10 @@ fun MyAppsScreen(
                     app = app,
                     onBack = { selectedAppForDetail = null },
                     onDelete = { appToDelete = it; selectedAppForDetail = null }, // Pasa el App completo
-                    onEdit = { appToEdit = it; selectedAppForDetail = null }, // Pasa el App completo
+                    onEdit = {
+                        myAppsViewModel.resetAppUiState()
+                        appToEdit = it;
+                        selectedAppForDetail = null }, // Pasa el App completo
                 )
             }
         }
@@ -173,7 +176,9 @@ fun MyAppsScreen(
 
     appToEdit?.let { app ->
         Dialog(
-            onDismissRequest = { appToEdit = null },
+            onDismissRequest = {
+                myAppsViewModel.resetAppUiState()
+                appToEdit = null },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Card(
@@ -184,15 +189,19 @@ fun MyAppsScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                // Aquí se carga tu AppEditScreen
                 AppEditScreen(
-                    app = app, // Pasa el objeto App de dominio
+                    app = app,
                     onSave = { updatedApp, newIconUri, newApkUri, newScreenshotUris ->
-                        // Llama a la función updateApp del ViewModel
-                        myAppsViewModel.updateApp(updatedApp, newIconUri, newApkUri, newScreenshotUris)
-                        appToEdit = null // Cierra el diálogo de edición después de guardar
+                        myAppsViewModel.updateApp(
+                            updatedApp,
+                            newIconUri,
+                            newApkUri,
+                            newScreenshotUris
+                        )
                     },
-                    onCancel = { appToEdit = null } // Cierra el diálogo de edición sin guardar
+                    onCancel = { appToEdit = null },
+                    editAppViewModel = viewModel(),
+                    myAppsViewModel = myAppsViewModel
                 )
             }
         }
@@ -205,8 +214,9 @@ fun MyAppsScreen(
             text = { Text("¿Estás seguro de que quieres eliminar '${app.name}'?") },
             confirmButton = {
                 TextButton(onClick = {
-                    app.id?.let { myAppsViewModel.deleteApp(it) } // Llama a la función de eliminación en MyAppsViewModel
-                    appToDelete = null // Cierra el diálogo de confirmación
+                    app.id?.let { myAppsViewModel.deleteApp(it) }
+                    appToDelete = null
+                    myAppsViewModel.resetAppUiState()
                 }) {
                     Text("Eliminar")
                 }
@@ -221,7 +231,9 @@ fun MyAppsScreen(
 
     if (showAddAppScreen) {
         Dialog(
-            onDismissRequest = { showAddAppScreen = false },
+            onDismissRequest = {
+                myAppsViewModel.resetAppUiState()
+                showAddAppScreen = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Card(

@@ -1,6 +1,7 @@
 package com.robstore.features.myApps.data.repository
 
 import android.util.Log
+import com.google.gson.Gson
 import com.robstore.features.home.data.model.AppFilesResponseDTO
 import com.robstore.features.myApps.data.datasource.MyAppsService
 import com.robstore.features.myApps.data.model.UpdateApp
@@ -11,13 +12,18 @@ import com.robstore.features.myApps.domain.repository.MyAppsRepository // Import
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
+import java.nio.charset.StandardCharsets
 
 class MyAppsRepositoryImpl(
     private val myAppsService: MyAppsService,
 ) : MyAppsRepository {
+
+    private val gson = Gson()
+
 
     override suspend fun getMyApps(): Result<List<App>> {
         return try {
@@ -135,73 +141,110 @@ class MyAppsRepositoryImpl(
         updatedApp: App,
         iconBytes: ByteArray?,
         apkBytes: ByteArray?,
-        screenshotBytesList: List<ByteArray>
+        screenshotBytesList: List<ByteArray>,
+        screenshotsToKeepUrls: List<String> // Esta es la lista ya filtrada y consolidada del ViewModel
     ): Result<App> {
         return try {
-            val updateMetadataResult = updatedApp.id?.let {
-                myAppsService.updateAppMetadata(
-                    appId = it,
-                    request = UpdateApp(
-                        name = updatedApp.name,
-                        description = updatedApp.description,
-                        version = updatedApp.version,
-                        releaseDate = null
-                    )
+            val appIdToUpdate = updatedApp.id
+
+            // 1. Actualizar metadatos
+            val updateMetadataResponse = myAppsService.updateAppMetadata(
+                appId = appIdToUpdate,
+                request = UpdateApp(
+                    name = updatedApp.name,
+                    description = updatedApp.description,
+                    version = updatedApp.version,
+                    releaseDate = updatedApp.releaseDate
+                )
+            )
+
+            if (!updateMetadataResponse.isSuccessful) {
+                val errorBody = updateMetadataResponse.errorBody()?.string()
+                return Result.failure(
+                    Exception("Error al actualizar metadatos de la app: ${updateMetadataResponse.code()} - ${errorBody ?: updateMetadataResponse.message()}")
                 )
             }
+            Log.d("MyAppsRepositoryImpl", "Metadatos actualizados con éxito para la app: ${updatedApp.name}")
 
-            if (updateMetadataResult != null) {
-                if (!updateMetadataResult.isSuccessful) {
-                    val errorBody = updateMetadataResult.errorBody()?.string()
-                    return Result.failure(
-                        Exception("Error al actualizar metadatos de la app: ${updateMetadataResult.code()} - ${errorBody ?: updateMetadataResult.message()}")
-                    )
-                }
+
+            // 2. Preparar partes de archivos
+            val iconPart = iconBytes?.takeIf { it.isNotEmpty() }?.let {
+                Log.d("MyAppsRepositoryImpl", "Preparando parte del icono para subir.")
+                MultipartBody.Part.createFormData("icon", "icon.jpg", it.toRequestBody("image/jpeg".toMediaType()))
+            } ?: run {
+                Log.d("MyAppsRepositoryImpl", "No hay icono nuevo o modificado para subir.")
+                null
             }
 
-            if (iconBytes != null || apkBytes != null || screenshotBytesList.isNotEmpty()) {
-                val iconPart = iconBytes?.let {
-                    MultipartBody.Part.createFormData("icon", "icon.jpg", it.toRequestBody("image/jpeg".toMediaTypeOrNull()))
-                }
-                val apkPart = apkBytes?.let {
-                    MultipartBody.Part.createFormData("appFile", "app.apk", it.toRequestBody("application/vnd.android.package-archive".toMediaTypeOrNull()))
-                }
-                val screenshotParts = screenshotBytesList.mapIndexed { index, bytes ->
-                    MultipartBody.Part.createFormData("screenshots", "screenshot_$index.jpg", bytes.toRequestBody("image/jpeg".toMediaTypeOrNull()))
+            val apkPart = apkBytes?.takeIf { it.isNotEmpty() }?.let {
+                Log.d("MyAppsRepositoryImpl", "Preparando parte del APK para subir.")
+                MultipartBody.Part.createFormData("appFile", "app.apk", it.toRequestBody("application/vnd.android.package-archive".toMediaType()))
+            } ?: run {
+                Log.d("MyAppsRepositoryImpl", "No hay APK nuevo o modificado para subir.")
+                null
+            }
+
+            val screenshotParts = screenshotBytesList
+                .filter { it.isNotEmpty() }
+                .mapIndexed { index, bytes ->
+                    Log.d("MyAppsRepositoryImpl", "Preparando nueva captura de pantalla #${index} para subir.")
+                    MultipartBody.Part.createFormData("screenshots", "screenshot_$index.jpg", bytes.toRequestBody("image/jpeg".toMediaType()))
                 }
 
-                val uploadFilesResult = updatedApp.id?.let {
-                    myAppsService.uploadAppFiles(
-                        appId = it.toRequestBody("text/plain".toMediaType()),
-                        icon = iconPart,
-                        appFile = apkPart,
-                        screenshots = screenshotParts
+            // Preparar la parte para las URLs de capturas de pantalla a mantener
+            // Esta parte SIEMPRE debe enviarse, incluso si está vacía, para indicarle al backend
+            // qué URLs de capturas de pantalla (ya existentes) debe conservar.
+            val jsonUrlsToKeep = gson.toJson(screenshotsToKeepUrls)
+            Log.d("MyAppsRepositoryImpl", "screenshotsToKeep JSON enviado: $jsonUrlsToKeep")
+
+            val screenshotsToKeepPart = MultipartBody.Part.createFormData(
+                "screenshotsToKeep",
+                null, // null como filename es para una parte de texto/JSON
+                jsonUrlsToKeep.toRequestBody("application/json".toMediaType())
+            )
+
+            // 3. Subir archivos si hay nuevos archivos O si hay una lista de URLs a mantener
+            // (La lista de URLs a mantener SIEMPRE se envía)
+            if (iconPart != null || apkPart != null || screenshotParts.isNotEmpty() || screenshotsToKeepPart != null) {
+                Log.d("MyAppsRepositoryImpl", "Realizando llamada a la API de subida de archivos para la app: ${updatedApp.id}")
+                Log.d("MyAppsRepositoryImpl", "Icono a subir: ${iconPart != null}")
+                Log.d("MyAppsRepositoryImpl", "APK a subir: ${apkPart != null}")
+                Log.d("MyAppsRepositoryImpl", "Nuevas capturas a subir: ${screenshotParts.size}")
+                Log.d("MyAppsRepositoryImpl", "URLs de capturas a mantener: ${screenshotsToKeepUrls.size}")
+
+
+                val uploadFilesResponse = myAppsService.uploadAppFiles(
+                    appId = appIdToUpdate.toRequestBody("text/plain".toMediaType()),
+                    icon = iconPart,
+                    appFile = apkPart,
+                    screenshots = screenshotParts.ifEmpty { null }, // Si está vacío, se envía null
+                    screenshotsToKeep = screenshotsToKeepPart
+                )
+
+                if (!uploadFilesResponse.isSuccessful) {
+                    val errorBody = uploadFilesResponse.errorBody()?.string()
+                    return Result.failure(
+                        Exception("Error al subir archivos de la app: ${uploadFilesResponse.code()} - ${errorBody ?: uploadFilesResponse.message()}")
                     )
                 }
-
-//                if (!uploadFilesResult.isSuccessful) {
-//                    val errorBody = uploadFilesResult?.errorBody()?.string()
-//                    if (uploadFilesResult != null) {
-//                        return Result.failure(
-//                            Exception("Error al subir archivos de la app: ${uploadFilesResult.code()} - ${errorBody ?: uploadFilesResult.message()}")
-//                        )
-//                    }
-//                }
+                Log.d("MyAppsRepositoryImpl", "Archivos actualizados subidos con éxito.")
+            } else {
+                Log.d("MyAppsRepositoryImpl", "No hay archivos nuevos para subir y la lista de capturas a mantener ya se manejó. Solo se actualizaron los metadatos.")
             }
 
             Result.success(updatedApp)
 
         } catch (e: HttpException) {
             val errorMessage = when (e.code()) {
-                400 -> "Datos inválidos en la solicitud."
-                404 -> "Aplicación no encontrada."
+                400 -> "Datos inválidos en la solicitud de actualización."
+                404 -> "Aplicación no encontrada para actualizar."
                 413 -> "Archivo demasiado grande."
                 else -> "Error del servidor: ${e.code()} - ${e.message()}"
             }
             Log.e("MyAppsRepositoryImpl", "HttpException al actualizar app: $errorMessage", e)
             Result.failure(Exception(errorMessage))
         } catch (e: Exception) {
-            Log.e("MyAppsRepositoryImpl", "Excepción al actualizar app: ${e.message}", e)
+            Log.e("MyAppsRepositoryImpl", "Excepción inesperada al actualizar app: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -267,7 +310,8 @@ class MyAppsRepositoryImpl(
                 appId = appIdPart,
                 icon = iconPart,
                 appFile = apkPart,
-                screenshots = screenshotParts.ifEmpty { null }
+                screenshots = screenshotParts.ifEmpty { null },
+                screenshotsToKeep = null
             )
 
 

@@ -16,8 +16,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitHelper {
-    private const val BASE_URL = "https://store.eduartrob.xyz/"
-    //private const val BASE_URL = "http://192.168.0.27:3000/"
+    //private const val BASE_URL = "https://store.eduartrob.xyz/"
+    private const val BASE_URL = "http://192.168.1.81:3000/"
     private const val CONNECT_TIMEOUT = 20L // Puedes mantener este en 20 segundos
     private const val READ_TIMEOUT = 20L    // Puedes mantener este en 20 segundos
     private const val WRITE_TIMEOUT = 600L

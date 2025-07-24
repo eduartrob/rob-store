@@ -19,9 +19,10 @@ class MyAppsUseCase(
         updatedApp: App,
         iconBytes: ByteArray?,
         apkBytes: ByteArray?,
-        screenshotBytesList: List<ByteArray>
+        screenshotBytesList: List<ByteArray>,
+        screenshotsToKeepUrls: List<String>
     ): Result<App> {
-        return myAppsRepository.updateApp(updatedApp, iconBytes, apkBytes, screenshotBytesList)
+        return myAppsRepository.updateApp(updatedApp, iconBytes, apkBytes, screenshotBytesList, screenshotsToKeepUrls)
     }
 
     suspend fun createApp(

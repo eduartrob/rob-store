@@ -7,15 +7,16 @@ interface MyAppsRepository {
     suspend fun getMyApps(): Result<List<App>>
     suspend fun getAppFiles(appId: String): Result<App>
     suspend fun updateApp(
-        updatedApp: App, // El objeto App con los metadatos actualizados
-        iconBytes: ByteArray?, // Los bytes del nuevo icono (opcional)
-        apkBytes: ByteArray?, // Los bytes del nuevo APK (opcional)
-        screenshotBytesList: List<ByteArray> // La lista de bytes de las nuevas capturas (opcional)
+        updatedApp: App,
+        iconBytes: ByteArray?,
+        apkBytes: ByteArray?,
+        screenshotBytesList: List<ByteArray>,
+        screenshotsToKeepUrls: List<String>
     ): Result<App>
     suspend fun createApp(
-        updatedApp: App, // El objeto App con los metadatos actualizados
-        iconBytes: ByteArray?, // Los bytes del nuevo icono (opcional)
-        apkBytes: ByteArray?, // Los bytes del nuevo APK (opcional)
-        screenshotBytesList: List<ByteArray> // La lista de bytes de las nuevas capturas (opcional)
+        updatedApp: App,
+        iconBytes: ByteArray?,
+        apkBytes: ByteArray?,
+        screenshotBytesList: List<ByteArray>
     ): Result<App>
 }

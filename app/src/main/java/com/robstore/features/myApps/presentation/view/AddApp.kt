@@ -1,4 +1,4 @@
-package com.robstore.features.addApp.presentation.view
+package com.robstore.features.myApps.presentation.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -59,7 +59,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.robstore.core.common.AppValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.features.myApps.domain.model.App
-import com.robstore.features.addApp.presentation.viewModel.AddAppViewModel
+import com.robstore.features.myApps.presentation.viewModel.AddAppViewModel
 import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModel
 import kotlinx.coroutines.delay
 
@@ -89,8 +89,7 @@ fun AppAddScreen(
     val apkValidationState by addAppViewModel.apkValidationState.collectAsState()
     val screenshotsValidationState by addAppViewModel.screenshotsValidationState.collectAsState()
 
-    val addAppUiState by addAppViewModel.addAppUiState.collectAsState()
-    val addUpdateAppUiState by myAppsViewModel.addUpdateAppUiState.collectAsStateWithLifecycle()
+    val addUpdateAppUiState by myAppsViewModel.appUiState.collectAsStateWithLifecycle()
 
 
     // Launchers para seleccionar archivos
@@ -113,35 +112,17 @@ fun AppAddScreen(
     }
 
     LaunchedEffect(addUpdateAppUiState) {
-        Log.d("AppAddScreen", "LaunchedEffect del ADD ESS: $addUpdateAppUiState")
         when (addUpdateAppUiState) {
-            GeneralUiState.Success -> {
+            is GeneralUiState.Success -> {
                 addAppViewModel.resetForm()
                 addAppViewModel.resetUiState()
                 onCancel()
-            }
-            else -> {}
-        }
-    }
-
-
-
-
-
-
-    LaunchedEffect(addAppUiState) {
-        when (addAppUiState) {
-            is GeneralUiState.Success -> {
-                delay(2000) // Espera 2 segundos antes de resetear
-                addAppViewModel.resetForm() // Resetea el formulario
-                addAppViewModel.resetUiState() // Resetea el estado de UI
-                onCancel() // Cierra el diálogo/navega hacia atrás
             }
             is GeneralUiState.Error -> {
                 delay(3000) // Muestra el error por 3 segundos
                 addAppViewModel.resetUiState() // Resetea el estado de UI
             }
-            else -> Unit
+            else -> {}
         }
     }
 
@@ -191,7 +172,7 @@ fun AppAddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                enabled = addAppUiState !is GeneralUiState.Loading,
+                enabled = addUpdateAppUiState !is GeneralUiState.Loading,
                 onClick = { iconPickerLauncher.launch("image/*") },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007aff))
             ) {
@@ -217,7 +198,7 @@ fun AppAddScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
-            enabled = addAppUiState !is GeneralUiState.Loading,
+            enabled = addUpdateAppUiState !is GeneralUiState.Loading,
             value = appName,
             onValueChange = { addAppViewModel.onNameChange(it) },
             modifier = Modifier
@@ -241,7 +222,7 @@ fun AppAddScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
-            enabled = addAppUiState !is GeneralUiState.Loading,
+            enabled = addUpdateAppUiState !is GeneralUiState.Loading,
             value = appDescription,
             onValueChange = { addAppViewModel.onDescriptionChange(it) },
             modifier = Modifier
@@ -267,7 +248,7 @@ fun AppAddScreen(
             textAlign = TextAlign.Center
         )
         OutlinedTextField(
-            enabled = addAppUiState !is GeneralUiState.Loading,
+            enabled = addUpdateAppUiState !is GeneralUiState.Loading,
             value = appVersion,
             onValueChange = { addAppViewModel.onVersionChange(it) },
             modifier = Modifier
@@ -300,7 +281,7 @@ fun AppAddScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             OutlinedButton(
-                enabled = addAppUiState !is GeneralUiState.Loading,
+                enabled = addUpdateAppUiState !is GeneralUiState.Loading,
                 onClick = { apkPickerLauncher.launch("application/vnd.android.package-archive") },
                 border = BorderStroke(1.dp, Color(0xFF007aff)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF007aff)),
@@ -345,7 +326,7 @@ fun AppAddScreen(
             }
             item {
                 OutlinedButton(
-                    enabled = addAppUiState !is GeneralUiState.Loading,
+                    enabled = addUpdateAppUiState !is GeneralUiState.Loading,
                     onClick = { screenshotPickerLauncher.launch("image/*") },
                     modifier = Modifier.size(100.dp),
                     border = BorderStroke(1.dp, Color.Gray),
@@ -380,7 +361,8 @@ fun AppAddScreen(
                 Text("Cancelar", fontSize = 16.sp, color = Color(0xFF007aff))
             }
             Button(
-                onClick = { addAppViewModel.validateAndSaveApp(onSave) },enabled = addAppUiState !is GeneralUiState.Loading,
+                enabled = addUpdateAppUiState !is GeneralUiState.Loading,
+                onClick = { addAppViewModel.validateAndSaveApp(onSave) },
                 modifier = Modifier.weight(1f).height(50.dp).padding(horizontal = 4.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF007aff),
@@ -388,7 +370,7 @@ fun AppAddScreen(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                if (addAppUiState is GeneralUiState.Loading) {
+                if (addUpdateAppUiState is GeneralUiState.Loading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Guardando...", fontSize = 16.sp)
@@ -397,9 +379,9 @@ fun AppAddScreen(
                 }
             }
         }
-        if (addAppUiState is GeneralUiState.Error && (addAppUiState as GeneralUiState.Error).message.isNotEmpty()) {
+        if (addUpdateAppUiState is GeneralUiState.Error && (addUpdateAppUiState as GeneralUiState.Error).message.isNotEmpty()) {
             Text(
-                text = (addAppUiState as GeneralUiState.Error).message,
+                text = (addUpdateAppUiState as GeneralUiState.Error).message,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 8.dp)

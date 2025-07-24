@@ -43,6 +43,7 @@ sealed class AppValidationState {
     object InvalidFormat : AppValidationState()
     object TooShort : AppValidationState()
     object TooLong : AppValidationState()
+    object TooMany : AppValidationState()
     object NotSelected: AppValidationState()
     object Error : AppValidationState()
 }

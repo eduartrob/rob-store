@@ -1,23 +1,22 @@
-package com.robstore.features.addApp.presentation.viewModel
+package com.robstore.features.myApps.presentation.viewModel
 
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.robstore.core.common.AppValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.features.myApps.domain.model.App
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class AddAppViewModel: ViewModel() {
-
+class EditAppViewModel : ViewModel(){
     // --- Estados de los campos de texto ---
     private val _nameInputText = MutableStateFlow("")
     val nameInputText: StateFlow<String> = _nameInputText
@@ -61,15 +60,17 @@ class AddAppViewModel: ViewModel() {
     val screenshotsValidationState: StateFlow<AppValidationState?> =
         _screenshotsValidationState.asStateFlow()
 
-    // --- Estado general de la UI para la operación de añadir app ---
-    private val _addAppUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
-    val addAppUiState: StateFlow<GeneralUiState> = _addAppUiState.asStateFlow()
+    private var _originalApp: App? = null
+
+//    private val _editAppUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
+//    val editAppUiState: StateFlow<GeneralUiState> = _editAppUiState.asStateFlow()
 
     // --- Constantes de validación ---
     private val MIN_NAME_LENGTH = 7
     private val MAX_NAME_LENGTH = 50
     private val MIN_DESCRIPTION_LENGTH = 10
     private val MAX_DESCRIPTION_LENGTH = 500
+    private val MAX_SCREENSHOTS = 5
 
 
     // --- Funciones de cambio de valor para los campos ---
@@ -98,13 +99,50 @@ class AddAppViewModel: ViewModel() {
         _apkValidationState.value = null
     }
 
-    fun onScreenshotsSelected(uris: List<Uri>) {
-        _selectedScreenshots.value = _selectedScreenshots.value + uris
+    fun onScreenshotsSelected(newUris: List<Uri>) {
+        val currentScreenshots = _selectedScreenshots.value.toMutableList()
+        val distinctNewUris = newUris.distinct()
+
+        // Filtrar nuevas URIs para que no excedan el límite de 5 al añadirlas
+        val availableSlots = MAX_SCREENSHOTS - currentScreenshots.size
+        val urisToAdd = distinctNewUris.take(availableSlots)
+
+        currentScreenshots.addAll(urisToAdd)
+        _selectedScreenshots.value = currentScreenshots
+
+        if (currentScreenshots.size > MAX_SCREENSHOTS) {
+            _screenshotsValidationState.value = AppValidationState.TooMany
+        } else {
+            _screenshotsValidationState.value = AppValidationState.Valid
+        }
+    }
+
+    fun removeScreenshot(uri: Uri) {
+        _selectedScreenshots.value = _selectedScreenshots.value.filter { it != uri }
         _screenshotsValidationState.value = null
     }
 
     fun clearScreenshots() {
         _selectedScreenshots.value = emptyList()
+        _screenshotsValidationState.value = null
+    }
+
+
+
+    fun initializeFromApp(app: App) {
+        _originalApp = app
+        onNameChange(app.name)
+        onDescriptionChange(app.description)
+        onVersionChange(app.version)
+
+        app.filesDetails?.iconUrl?.toUri()?.let { onIconSelected(it) } ?: onIconSelected(null)
+        app.filesDetails?.appFileUrl?.toUri()?.let { onApkSelected(it) } ?: onApkSelected(null)
+
+        // Para las capturas, primero limpiamos y luego añadimos las nuevas
+        _selectedScreenshots.value = app.filesDetails?.screenshots
+            ?.map { it.toUri() }
+            ?.distinct()
+            ?.take(MAX_SCREENSHOTS) ?: emptyList() // Asegurarse de no exceder el límite inicial
         _screenshotsValidationState.value = null
     }
 
@@ -183,20 +221,27 @@ class AddAppViewModel: ViewModel() {
     }
 
     private fun validateScreenshots(): Boolean {
-        return if (_selectedScreenshots.value.isEmpty()) {
-            _screenshotsValidationState.value = AppValidationState.NotSelected
-            false
-        } else {
-            _screenshotsValidationState.value = AppValidationState.Valid
-            true
+        return when {
+            _selectedScreenshots.value.isEmpty() -> {
+                _screenshotsValidationState.value = AppValidationState.NotSelected
+                false
+            }
+            _selectedScreenshots.value.size > MAX_SCREENSHOTS -> {
+                _screenshotsValidationState.value = AppValidationState.TooMany
+                false
+            }
+            else -> {
+                _screenshotsValidationState.value = AppValidationState.Valid
+                true
+            }
         }
     }
 
 
     // --- Validacion de todos los datos ---
-    fun validateAndSaveApp(onSave: (newApp: App, iconUri: Uri?, apkUri: Uri?, screenshotUris: List<Uri>) -> Unit) {
+    fun validateAndUpdateApp(onSave: (newApp: App, iconUri: Uri?, apkUri: Uri?, screenshotUris: List<Uri>) -> Unit) {
         viewModelScope.launch {
-            _addAppUiState.value = GeneralUiState.Loading
+//            _editAppUiState.value = GeneralUiState.Loading
 
             val isNameValid = validateName()
             val isDescriptionValid = validateDescription()
@@ -212,27 +257,34 @@ class AddAppViewModel: ViewModel() {
 
             if (allFieldsValid) {
                 Log.d("AddAppViewModel", "Todos los campos son válidos. Preparando para guardar.")
-                val newApp = App(
-                    id = null.toString(),
+
+                val originalApp = _originalApp
+                if (originalApp == null) {
+//                    _editAppUiState.value = GeneralUiState.Error("Error: No se pudo obtener el ID de la aplicación original para actualizar.")
+                    Log.e("EditAppViewModel", "Original App o su ID es nulo al intentar actualizar.")
+                    return@launch
+                }
+
+                val updatedApp = originalApp.copy(
+                    id = originalApp.id,
                     name = nameInputText.value,
                     description = descriptionInputText.value,
                     version = versionInputText.value,
-                    developerId = "",
-                    releaseDate = currentDate,
-                    rate = 0.0,
-                    filesDetails = null,
-                    uiDetails = null,
                 )
-                onSave(newApp, selectedIcon.value, selectedApk.value, selectedScreenshots.value)
+
+                onSave(updatedApp, selectedIcon.value, selectedApk.value, selectedScreenshots.value)
             } else {
-                _addAppUiState.value = GeneralUiState.Error("Por favor, corrige los errores en el formulario.")
+//                _editAppUiState.value = GeneralUiState.Error("Por favor, corrige los errores en el formulario.")
                 Log.d("AddAppViewModel", "Errores de validación en el formulario.")
             }
         }
     }
 
+
+
+
     fun resetUiState() {
-        _addAppUiState.value = GeneralUiState.Idle
+//        _editAppUiState.value = GeneralUiState.Idle
     }
 
     fun resetForm() {
@@ -250,6 +302,6 @@ class AddAppViewModel: ViewModel() {
         _apkValidationState.value = null
         _screenshotsValidationState.value = null
 
-        _addAppUiState.value = GeneralUiState.Idle
+//        _editAppUiState.value = GeneralUiState.Idle
     }
 }

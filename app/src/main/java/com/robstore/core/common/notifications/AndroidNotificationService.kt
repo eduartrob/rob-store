@@ -50,7 +50,7 @@ class AndroidNotificationService(private val context: Context) : INotificationSe
             context,
             0, // Request code
             intent,
-            PendingIntent.FLAG_IMMUTABLE // Obligatorio a partir de Android S (API 31)
+            PendingIntent.FLAG_IMMUTABLE
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
