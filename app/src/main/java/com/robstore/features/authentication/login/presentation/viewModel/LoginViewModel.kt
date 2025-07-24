@@ -51,6 +51,10 @@ class LoginViewModel(
     private val _initialDestination = MutableStateFlow<String?>(null)
     val initialDestination: StateFlow<String?> = _initialDestination
 
+    private val _isInitialDestinationLoaded = MutableStateFlow(false)
+    val isInitialDestinationLoaded: StateFlow<Boolean> = _isInitialDestinationLoaded.asStateFlow()
+
+
     private val _loginUiState = MutableStateFlow<GeneralUiState>(GeneralUiState.Idle)
     val loginUiState: StateFlow<GeneralUiState> = _loginUiState.asStateFlow()
 
@@ -62,6 +66,7 @@ class LoginViewModel(
             tokenRepository.getKey().collectLatest { token ->
                 _initialDestination.value = if (token.isNullOrEmpty()) "login" else "home"
                 Log.d("LoginViewModel", "Token cambió: ${if (token.isNullOrEmpty()) "NULO/VACÍO" else "EXISTE"}. Destino Inicial: ${_initialDestination.value}")
+                _isInitialDestinationLoaded.value = true
             }
         }
 
@@ -73,13 +78,10 @@ class LoginViewModel(
                     _isOnline.value = isConnected
 
                     if (!isConnected) {
-                        // Si no hay conexión, mostramos el error de inmediato
                         _loginUiState.value = GeneralUiState.Error("No hay conexión a internet. Por favor, verifica tu conexión.")
                         Log.d("LoginViewModel", "Estado de UI: Error de conexión a internet.")
                     } else if (_loginUiState.value is GeneralUiState.Error &&
                         (_loginUiState.value as GeneralUiState.Error).message == "No hay conexión a internet. Por favor, verifica tu conexión.") {
-                        // Si la conexión se restaura y el error actual era el de internet,
-                        // volvemos al estado Idle para mostrar la pantalla de login.
                         _loginUiState.value = GeneralUiState.Idle
                         Log.d("LoginViewModel", "Estado de UI: Conexión restaurada, volviendo a Idle.")
                     }
@@ -159,6 +161,8 @@ class LoginViewModel(
                     "LoginViewModel", "Login exitoso para $email. Token guardado por el Repositorio."
                 )
                 _loginUiState.value = GeneralUiState.Success
+
+                clearCredentials()
             }.onFailure { exception ->
 
                 _emailValidationState.value = EmailValidationState.Error
@@ -184,5 +188,17 @@ class LoginViewModel(
                 }
             }
         }
+    }
+
+    fun clearCredentials() {
+        _emailInputText.value = ""
+        _emailValidationState.value = null
+        hasEmailBeenFocused = false // Restablece también esta bandera si la usas para la validación
+
+        _password.value = ""
+        _passwordValidationState.value = null
+        wasErrorPassword = false // Restablece también esta bandera
+        _error.value = "" // Limpia cualquier mensaje de error general
+        _loginUiState.value = GeneralUiState.Idle // Restablece el estado de la UI a Idle
     }
 }

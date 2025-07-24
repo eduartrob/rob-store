@@ -95,57 +95,42 @@ fun Home(
 
 
 
-    val locationPermission = Manifest.permission.ACCESS_FINE_LOCATION
-    var hasLocationPermissionBeenRequested by remember { mutableStateOf(false) }
+    var requestLocationPermission by remember { mutableStateOf(true) }
+    var requestNotificationPermission by remember { mutableStateOf(false) }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
             Log.d("Home", "Permiso de ubicación concedido.")
-            homeViewModel.requestAndSaveCountry()
         } else {
-            Log.d("Home", "Permiso de ubicación denegado por el usuario.")
-            Toast.makeText(context, "Permiso de ubicación denegado. Algunas funciones podrían no estar disponibles.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
         }
+        // Ahora que terminó el permiso de ubicación, solicita el siguiente permiso:
+        requestNotificationPermission = true
     }
 
-    LaunchedEffect(Unit) {
-        val granted = ContextCompat.checkSelfPermission(context, locationPermission) == PackageManager.PERMISSION_GRANTED
-
-        if (granted) {
-            Log.d("Home", "Permiso de ubicación ya concedido.")
-            homeViewModel.requestAndSaveCountry()
-        } else if (!hasLocationPermissionBeenRequested) {
-            Log.d("Home", "Solicitando permiso de ubicación...")
-            locationPermissionLauncher.launch(locationPermission)
-            hasLocationPermissionBeenRequested = true
-        }
-    }
-
-
-
-    val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
-    var hasNotificationPermissionBeenRequested by remember { mutableStateOf(false) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
             Log.d("Home", "Permiso de notificaciones concedido.")
         } else {
-            Toast.makeText(context, "Permiso de notificaciones denegado. Algunas alertas podrían no mostrarse.", Toast.LENGTH_LONG).show()
-            Log.w("Home", "Permiso de notificaciones denegado.")
+            Toast.makeText(context, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
         }
     }
 
-    LaunchedEffect(Unit) {
-        // TIRAMISU es API 33
-        val granted = ContextCompat.checkSelfPermission(context, notificationPermission) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            Log.d("Home", "Permiso de notificaciones ya concedido.")
-        } else if (!hasNotificationPermissionBeenRequested) {
-            Log.d("Home", "Solicitando permiso de notificaciones...")
-            notificationPermissionLauncher.launch(notificationPermission)
-            hasNotificationPermissionBeenRequested = true
+    LaunchedEffect(requestLocationPermission) {
+        if (requestLocationPermission) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            requestLocationPermission = false // para no pedirlo otra vez
+        }
+    }
+
+    LaunchedEffect(requestNotificationPermission) {
+        if (requestNotificationPermission) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            requestNotificationPermission = false // para no pedirlo otra vez
         }
     }
 
@@ -178,7 +163,7 @@ fun Home(
     SideEffect {
         systemUiController.setStatusBarColor(
             color = headerColor,
-            darkIcons = false // o true según el contraste
+            darkIcons = false
         )
     }
 

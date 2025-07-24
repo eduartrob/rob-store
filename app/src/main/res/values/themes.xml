@@ -3,9 +3,8 @@
 
     <style name="Theme.RobStore" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Colores de tu tema de Compose aquí -->
-
-        <!-- Asegúrate de que el windowBackground aquí sea el mismo que el postSplashScreenTheme para evitar parpadeos -->
-        <item name="android:windowBackground">@color/background_custom_light</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
 </resources>

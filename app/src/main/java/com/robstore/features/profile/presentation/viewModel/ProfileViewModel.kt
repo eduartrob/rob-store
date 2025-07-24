@@ -22,11 +22,13 @@ import com.robstore.core.utils.ImageUtils
 import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -70,7 +72,7 @@ class ProfileViewModel(
     val regionInputText: StateFlow<String> = _regionInputText.asStateFlow()
 
     private val _navigateToLoginEvent = Channel<Unit>(Channel.BUFFERED)
-    val navigateToLoginEvent = _navigateToLoginEvent.receiveAsFlow() // Esto es lo que la UI observará
+    val navigateToLoginEvent = _navigateToLoginEvent.receiveAsFlow()
 
 
     init {
@@ -231,33 +233,30 @@ class ProfileViewModel(
     }
 
 
-    suspend fun logout(){
+    suspend fun logout() {
         _generalUiState.value = GeneralUiState.Loading
+        try {
+            updateUserUseCase()
+            Log.d("ProfileViewModel", "Solicitud de cierre de sesión enviada al servidor (resultado no procesado).")
+        } catch (e: Exception) {
+            Log.e("ProfileViewModel", "Excepción al enviar solicitud de logout al servidor: ${e.message}", e)
+        } finally {
+            dataStoreManager.deleteKey(PreferenceKeys.TOKEN)
+            dataStoreManager.clearAll()
 
-
-        val tokenErrorCodes = setOf(400, 401, 403, 406)
-        val result = updateUserUseCase() // Intenta informar al servidor si el token aún es válido
-
-        result.onSuccess {
-            Log.d("ProfileViewModel", "Sesión cerrada exitosamente en el servidor.")
-            Log.d("ProfileViewModel", "Datos de sesión locales eliminados.")
-        }.onFailure { exception ->
-            val httpCode = (exception as? HttpException)?.code()
-            if (httpCode != null && httpCode in tokenErrorCodes) {
-                Log.d("ProfileViewModel", "Error de token ($httpCode) al cerrar sesión. Sesión considerada cerrada, datos locales ya eliminados.")
+            val token = dataStoreManager.getKey(PreferenceKeys.TOKEN).firstOrNull()
+            if (token.isNullOrEmpty()) {
+                Log.d("ProfileViewModel", "Confirmado que token fue eliminado.")
+                _generalUiState.value = GeneralUiState.Idle
+                _navigateToLoginEvent.send(Unit)
+                Log.d("ProfileViewModel", "Evento de navegación a login enviado.")
             } else {
-                val msg = when (exception) {
-                    is HttpException -> "Error HTTP ${httpCode ?: "desconocido"}: No se pudo cerrar sesión en el servidor."
-                    else -> "Error de conexión o inesperado al intentar cerrar sesión en el servidor: ${exception.message ?: "Desconocido"}"
-                }
-                Log.e("ProfileViewModel", "Error al cerrar sesión en el servidor: $msg. Datos locales eliminados, navegando al login." )
+                Log.w("ProfileViewModel", "Token sigue presente, no se navega aún.")
+                // Opcional: retry, espera o maneja error
             }
         }
-
-        dataStoreManager.deleteKey(PreferenceKeys.TOKEN)
-        dataStoreManager.clearAll()
-        _generalUiState.value = GeneralUiState.Success
     }
+
 
 
 

@@ -99,15 +99,6 @@ fun LoginScreen(
 
     val uiState by loginViewModel.loginUiState.collectAsState()
 
-
-
-
-    LaunchedEffect(key1 = uiState) {
-        if (uiState is GeneralUiState.Success) {
-            onNavigateToHome()
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()

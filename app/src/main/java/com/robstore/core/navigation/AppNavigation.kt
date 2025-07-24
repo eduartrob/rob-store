@@ -1,10 +1,18 @@
 package com.robstore.core.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -36,10 +44,13 @@ import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
 
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
 ) {
+    val context = LocalContext.current
+
     val factory = remember {
         LoginViewModelFactory(
             LoginAppModule.loginUseCase,
@@ -50,6 +61,7 @@ fun AppNavigation(
     val loginViewModel: LoginViewModel = viewModel(factory = factory)
 
     val initialDestination by loginViewModel.initialDestination.collectAsState()
+    val isInitialDestinationLoaded by loginViewModel.isInitialDestinationLoaded.collectAsState()
 
     val registerViewModelFactory = remember {
         RegisterViewModelFactory(
@@ -62,8 +74,6 @@ fun AppNavigation(
     val recoveryViewModelFactory = remember { RecoveryViewModelFactory(RecoveryAppModule.recoveryUseCase) }
     val recoveryPasswdViewModel: RecoveryPasswdViewModel = viewModel(factory = recoveryViewModelFactory)
 
-
-
     val homeViewModelFactory = remember {
         HomeViewModelFactory(
             LoginAppModule.getLocationUseCase(),
@@ -72,7 +82,7 @@ fun AppNavigation(
         )
     }
     val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
-    val context = LocalContext.current
+
 
     val myAppsViewModelFactory = remember {
         MyAppsViewModelFactory(
@@ -93,27 +103,39 @@ fun AppNavigation(
     )}
     val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
 
-    LaunchedEffect(initialDestination) {
-        if (initialDestination != null) {
-            if (navController.currentDestination?.route != initialDestination) {
-                navController.navigate(initialDestination!!) {
-                    popUpTo(navController.graph.id) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
+    // Este LaunchedEffect es el que debe manejar la navegación de logout
+    LaunchedEffect(Unit) {
+        profileViewModel.navigateToLoginEvent.collect {
+            // Navega a LOGIN y limpia TODO el back stack.
+            // Esta es la forma más agresiva y fiable de manejar la navegación de logout.
+            navController.navigate(NavigationRoutes.LOGIN) {
+                // popUpTo(navController.graph.id) { inclusive = true }
+                // Usar navController.graph.startDestinationId es más explícito para la raíz del grafo
+                popUpTo(navController.graph.startDestinationId) {
+                    inclusive = true // Incluye la propia startDestination en la eliminación
                 }
+                // Asegura que solo haya una instancia de la pantalla de login en el stack.
+                launchSingleTop = true
             }
         }
     }
 
 
-    if (initialDestination != null) {
+    // Solo construye el NavHost si el destino inicial ya ha sido cargado
+    if (!isInitialDestinationLoaded) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator() // Muestra un indicador de carga
+        }
+    } else {
         NavHost(
+            modifier = Modifier.systemBarsPadding() ,
             navController = navController,
+            // Aquí, la startDestination se establece una vez al inicio.
+            // La navegación de logout se manejará por el LaunchedEffect de arriba.
             startDestination = when (initialDestination) {
                 "home" -> NavigationRoutes.HOME
                 "login" -> NavigationRoutes.LOGIN
-                else -> NavigationRoutes.LOGIN
+                else -> NavigationRoutes.LOGIN // Fallback, aunque con isInitialDestinationLoaded no debería ser ""
             }
         ) {
             composable(NavigationRoutes.LOGIN) {
@@ -160,6 +182,4 @@ fun AppNavigation(
             }
         }
     }
-
-
 }

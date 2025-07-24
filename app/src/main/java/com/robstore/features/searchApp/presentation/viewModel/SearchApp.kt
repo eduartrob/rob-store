@@ -14,7 +14,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue // Importa getValue
+import androidx.compose.runtime.mutableStateOf // Importa mutableStateOf
+import androidx.compose.runtime.remember // Importa remember
+import androidx.compose.runtime.setValue // Importa setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +28,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SearchAppScreen(onBack: () -> Unit) {
+    // Estado para almacenar el texto que el usuario escribe en el campo de búsqueda
+    var searchText by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -47,24 +55,47 @@ fun SearchAppScreen(onBack: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
 
-            )
+                )
             Spacer(modifier = Modifier.weight(0.15f))
         }
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Contenido de la pantalla de búsqueda
-        Text(
-            text = "Aquí iría la interfaz de búsqueda de aplicaciones.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.DarkGray
+        // Campo de texto para la búsqueda
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = { newText ->
+                searchText = newText
+            },
+            label = { Text("Nombre de la aplicación") }, // Etiqueta del campo de texto
+            singleLine = true, // Permite una sola línea de texto
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp), // Padding horizontal para el TextField
         )
-        // Puedes añadir un TextField, un botón de búsqueda, una LazyColumn para resultados, etc. aquí
-        // Ejemplo de un campo de texto de búsqueda:
-        // OutlinedTextField(
-        //     value = searchText,
-        //     onValueChange = { searchText = it },
-        //     label = { Text("Escribe para buscar...") },
-        //     modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        // )
+
+        Spacer(modifier = Modifier.height(16.dp)) // Espacio entre el campo de búsqueda y los resultados
+
+        // Contenido de la pantalla de búsqueda (aquí irían los resultados)
+        if (searchText.isEmpty()) {
+            Text(
+                text = "Escribe el nombre de una aplicación para buscar.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.DarkGray
+            )
+        } else {
+            // Aquí iría la lógica para mostrar los resultados de la búsqueda
+            // Por ejemplo, una LazyColumn con AppCard para cada resultado
+            Text(
+                text = "Mostrando resultados para: \"$searchText\"",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.DarkGray
+            )
+            // LazyColumn para los resultados de búsqueda:
+            // LazyColumn {
+            //     items(searchResults) { appInfo ->
+            //         AppCard(app = appInfo, onClick = { /* Navegar a detalles */ })
+            //     }
+            // }
+        }
     }
 }
