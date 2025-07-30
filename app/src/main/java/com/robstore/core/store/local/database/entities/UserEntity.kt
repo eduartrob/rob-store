@@ -9,6 +9,7 @@ data class UserEntity(
     val name: String,
     val email: String,
     val phone: String,
+    val isPendingSync: Boolean = false
 )
 
 

@@ -15,4 +15,10 @@ interface UserDao {
 
     @Query("DELETE FROM user")
     suspend fun clearUser()
+
+    @Query("SELECT * FROM user WHERE isPendingSync = 1 LIMIT 1")
+    fun getPendingUser(): Flow<UserEntity?>
+
+    @Query("UPDATE user SET isPendingSync = 0 WHERE id = :userId")
+    suspend fun clearPendingUserFlag(userId: String)
 }

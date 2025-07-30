@@ -69,6 +69,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -103,6 +104,8 @@ fun ProfileScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     val name by profileViewModel.nameInputText.collectAsState()
     val nameValidationState by profileViewModel.nameValidationState.collectAsState()
@@ -118,6 +121,7 @@ fun ProfileScreen(
 
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+
 
 
     LaunchedEffect(generalUiState) {
@@ -468,6 +472,8 @@ fun ProfileScreen(
                     Button(
                         onClick = {
                             coroutineScope.launch {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
                                 profileViewModel.updateCredentials()
                             }
                         },

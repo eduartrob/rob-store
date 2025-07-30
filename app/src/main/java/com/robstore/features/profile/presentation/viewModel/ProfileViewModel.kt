@@ -20,6 +20,7 @@ import com.robstore.core.store.local.database.repository.UserRepository
 import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.core.utils.ImageUtils
 import com.robstore.features.authentication.login.di.AppModule
+import com.robstore.features.myApps.di.MyAppsModule.myAppsNotificationsUseCase
 import com.robstore.features.profile.domain.useCase.UpdateUserUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -93,6 +94,23 @@ class ProfileViewModel(
         viewModelScope.launch {
             dataStoreManager.getKey(PreferenceKeys.USER_PROFILE_PICTURE_URI).collectLatest { urlString ->
                 _photoUri.value = urlString // deja como String
+            }
+        }
+
+        viewModelScope.launch {
+            internetConnectivityUseCase.observeConnectivity().collectLatest { isConnected ->
+                if (isConnected) {
+                    Log.d("ProfileViewModel", "Internet connection restored. Checking for pending updates...")
+                    delay(2000)
+                    syncPendingUserData()
+                } else {
+                    Log.d("ProfileViewModel", "No internet connection. Updates will be synced when online.")
+                    val pendingUser = userRepository.getPendingUser().firstOrNull()
+                    if (pendingUser != null) {
+                        myAppsNotificationsUseCase.saveLocalData("No hay conexión a internet. Los cambios se guardarán y se enviarán automáticamente cuando vuelvas a tener conexión.")
+
+                    }
+                }
             }
         }
 
@@ -221,15 +239,17 @@ class ProfileViewModel(
                 id = newUserId,
                 name = name,
                 email = email,
-                phone = phone
+                phone = phone,
+                isPendingSync = true
             )
             userRepository.upsertUser(newUser)
             Log.d("Home", "User guardado localmente exitoso $newUser")
+            myAppsNotificationsUseCase.saveLocalData("Tus cambios se actualizaran cuando haya internet.")
         }
     }
 
     fun resetProfileUiState() {
-        _generalUiState.value = GeneralUiState.Idle // O el estado apropiado para tu pantalla después del éxito
+        _generalUiState.value = GeneralUiState.Idle
     }
 
 
@@ -316,6 +336,42 @@ class ProfileViewModel(
             } catch (e: Exception) {
                 _generalUiState.value = GeneralUiState.Error("Error inesperado al subir imagen: ${e.message ?: "Desconocido"}")
                 Log.e("ProfileViewModel", "Error inesperado al subir imagen:", e)
+            }
+        }
+    }
+
+
+    private suspend fun performUserUpdate(name: String, email: String, phone: String) {
+        updateUserUseCase(name, email, phone)
+            .onSuccess { data ->
+                dataStoreManager.saveUserInformation(
+                    name = data.name,
+                    email = data.email,
+                    phone = data.phone
+                )
+                val userId = dataStoreManager.getKey(PreferenceKeys.USER_ID)
+                userId.let { userRepository.clearPendingUserFlag(userId.toString()) }
+                _generalUiState.value = GeneralUiState.Success
+                Log.d("ProfileViewModel", "Perfil actualizado exitosamente: ${data}")
+                myAppsNotificationsUseCase.successUpdataData("¡Tus cambios de perfil se han actualizado!")
+            }.onFailure { exception ->
+                val errorMessage = exception.message ?: "Error desconocido al actualizar el perfil."
+                _generalUiState.value = GeneralUiState.Error(errorMessage)
+                Log.e("ProfileViewModel", "Error al actualizar perfil: $errorMessage", exception)
+                myAppsNotificationsUseCase.errorUpdateData("Error al sincronizar cambios")
+            }
+    }
+
+    private fun syncPendingUserData() {
+        viewModelScope.launch {
+            val pendingUser = userRepository.getPendingUser().firstOrNull()
+            if (pendingUser != null) {
+                Log.d("ProfileViewModel", "Found pending user data: $pendingUser. Attempting to sync...")
+                _generalUiState.value = GeneralUiState.Loading // Show loading while syncing
+                myAppsNotificationsUseCase.successUpdataData("Sincronizando tus cambios pendientes...")
+                performUserUpdate(pendingUser.name ?: "", pendingUser.email ?: "", pendingUser.phone ?: "")
+            } else {
+                Log.d("ProfileViewModel", "No pending user data found.")
             }
         }
     }

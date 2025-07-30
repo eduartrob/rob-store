@@ -14,4 +14,14 @@ class MyAppsNotificationsUseCase(
     fun showAppDeleteSuccess(appName: String){
         notificationService.showInfoDeleteApps("La aplicación '$appName' se ha borrado.")
     }
+
+    fun saveLocalData(message: String){
+        notificationService.showInfo(message)
+    }
+    fun successUpdataData(message: String){
+        notificationService.showSuccess(message)
+    }
+    fun errorUpdateData(message: String){
+        notificationService.showError(title = "Erro de sincronización", message = message)
+    }
 }

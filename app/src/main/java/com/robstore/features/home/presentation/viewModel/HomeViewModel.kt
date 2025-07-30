@@ -59,10 +59,11 @@ class HomeViewModel(
         }
 
         fetchApps(isInitialLoad = true)
+        requestAndSaveCountry()
     }
 
 
-    fun requestAndSaveCountry() {
+    private fun requestAndSaveCountry() {
         viewModelScope.launch {
             val result = locationUseCase()
             if (result.isSuccess) {
@@ -107,7 +108,7 @@ class HomeViewModel(
     }
 
 
-    fun fetchApps(isInitialLoad: Boolean = false) {
+    private fun fetchApps(isInitialLoad: Boolean = false) {
         if (isInitialLoad && hasLoadedApps) return
 
         viewModelScope.launch {
