@@ -22,6 +22,11 @@ class MyAppsNotificationsUseCase(
         notificationService.showSuccess(message)
     }
     fun errorUpdateData(message: String){
-        notificationService.showError(title = "Erro de sincronización", message = message)
+        notificationService.showError(title = "Error de sincronización", message = message)
     }
+    fun infoData(message: String) {
+        notificationService.showInfo(message)
+    }
+
+
 }

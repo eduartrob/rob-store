@@ -1,15 +1,14 @@
 package com.robstore
 
 import android.os.Bundle
+import android.util.Log // <-- Importa esto
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.robstore.core.navigation.AppNavigation
-
 import com.robstore.features.authentication.login.di.AppModule
-
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,13 +23,9 @@ class MainActivity : ComponentActivity() {
 
         AppModule.init(applicationContext)
 
+
         setContent {
             AppNavigation()
         }
     }
-
 }
-
-
-
-

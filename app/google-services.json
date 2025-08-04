@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "992410969791",
+    "project_id": "rob-store-b7d98",
+    "storage_bucket": "rob-store-b7d98.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992410969791:android:f6009769f56d50d63e880a",
+        "android_client_info": {
+          "package_name": "com.robstore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsKh-EItE3bGtqwZU-YZlb322ZDvpPPK4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

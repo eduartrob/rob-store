@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     alias(libs.plugins.kotlin.ksp)
+
+    id("com.google.gms.google-services") version "4.4.3"
+
 }
 
 android {
@@ -106,4 +109,7 @@ dependencies {
 
     implementation(libs.material3)
 
+
+    implementation(platform(libs.firebase.bom.v3310))
+    implementation(libs.google.firebase.messaging)
 }

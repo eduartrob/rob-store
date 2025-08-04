@@ -10,4 +10,5 @@ object PreferenceKeys {
     val USER_PHONE = stringPreferencesKey("user_phone")
     val USER_REGION = stringPreferencesKey("user_region")
     val USER_PROFILE_PICTURE_URI = stringPreferencesKey("user_profile_picture_uri")
+    val TOKEN_MYFIREBASE = stringPreferencesKey("token_myfirebase")
 }

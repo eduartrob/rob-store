@@ -368,7 +368,7 @@ class ProfileViewModel(
             if (pendingUser != null) {
                 Log.d("ProfileViewModel", "Found pending user data: $pendingUser. Attempting to sync...")
                 _generalUiState.value = GeneralUiState.Loading // Show loading while syncing
-                myAppsNotificationsUseCase.successUpdataData("Sincronizando tus cambios pendientes...")
+                myAppsNotificationsUseCase.infoData("Sincronizando tus cambios pendientes...")
                 performUserUpdate(pendingUser.name ?: "", pendingUser.email ?: "", pendingUser.phone ?: "")
             } else {
                 Log.d("ProfileViewModel", "No pending user data found.")

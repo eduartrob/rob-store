@@ -48,7 +48,7 @@ class AndroidNotificationService(private val context: Context) : INotificationSe
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
-            0, // Request code
+            0,
             intent,
             PendingIntent.FLAG_IMMUTABLE
         )
@@ -76,7 +76,7 @@ class AndroidNotificationService(private val context: Context) : INotificationSe
             .setSmallIcon(R.drawable.logoprueba)
             .setContentTitle("RobStore - $title")
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // Errores suelen ser de alta prioridad
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setColor(context.resources.getColor(R.color.purple_700, null))
@@ -89,7 +89,7 @@ class AndroidNotificationService(private val context: Context) : INotificationSe
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("RobStore - Advertencia")
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Prioridad normal
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
         notificationManager.notify(NOTIFICATION_ID_WARNING, builder.build())
     }

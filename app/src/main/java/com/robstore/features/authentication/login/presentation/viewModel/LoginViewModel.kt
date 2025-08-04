@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.robstore.core.common.EmailValidationState
 import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
+import com.robstore.core.service.MyFirebaseMessagingService
 import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.features.authentication.login.di.AppModule.tokenRepository
@@ -62,6 +63,7 @@ class LoginViewModel(
 
 
     init {
+
         viewModelScope.launch {
             tokenRepository.getKey().collectLatest { token ->
                 _initialDestination.value = if (token.isNullOrEmpty()) "login" else "home"
