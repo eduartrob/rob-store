@@ -8,8 +8,8 @@ import com.robstore.features.authentication.register.domain.repository.RegisterR
 class RegisterRepositoryImpl(
     private val registerService: RegisterService
 ): RegisterRepository {
-    override suspend fun register(name: String, email: String, password: String, phone: String): Result<Register> {
-        val registerRequest = RegisterRequest(name, email, password, phone)
+    override suspend fun register(name: String, email: String, password: String, phone: String, fireToken: String): Result<Register> {
+        val registerRequest = RegisterRequest(name, email, password, phone, fsmToken = fireToken)
         return try {
             val response = registerService.register(registerRequest)
             if (response.isSuccessful) {

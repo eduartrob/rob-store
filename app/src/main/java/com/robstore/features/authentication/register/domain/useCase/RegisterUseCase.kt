@@ -6,7 +6,7 @@ import com.robstore.features.authentication.register.domain.repository.RegisterR
 class RegisterUseCase(
     private val registerRepository: RegisterRepository
 ) {
-    suspend operator fun invoke(name: String, email: String, password: String, phone: String): Result<Register> {
-        return registerRepository.register(name, email, password, phone)
+    suspend operator fun invoke(name: String, email: String, password: String, phone: String, fireToken: String): Result<Register> {
+        return registerRepository.register(name, email, password, phone, fireToken)
     }
 }

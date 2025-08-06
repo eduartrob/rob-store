@@ -98,6 +98,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit,
     onUpdateSuccess: () -> Unit,
+    onNavigateToWeather: () -> Unit,
     profileViewModel: ProfileViewModel,
     cameraViewModel: CameraViewModel,
 ) {
@@ -602,7 +603,27 @@ fun ProfileScreen(
 
 
 
-
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 1.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = onNavigateToWeather,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(text = "Ver clima", fontWeight = FontWeight.Bold)
+                }
+            }
 
 
 

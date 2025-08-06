@@ -70,6 +70,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun Home(
     onNavigateToLogin: () -> Unit,
+    onNavigateToWeather: () -> Unit,
     homeViewModel: HomeViewModel,
     myAppsViewModel: MyAppsViewModel,
     profileViewModel: ProfileViewModel
@@ -238,7 +239,8 @@ fun Home(
                         onUpdateSuccess = {},
                         profileViewModel = profileViewModel,
                         cameraViewModel = cameraViewModel,
-                    )
+                        onNavigateToWeather = onNavigateToWeather,
+                        )
                 }
             }
         }

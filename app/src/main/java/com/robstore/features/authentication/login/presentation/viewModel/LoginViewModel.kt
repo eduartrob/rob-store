@@ -11,6 +11,7 @@ import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
 import com.robstore.core.service.MyFirebaseMessagingService
 import com.robstore.core.store.local.dataStore.DataStoreManager
+import com.robstore.core.store.local.dataStore.PreferenceKeys
 import com.robstore.core.sync.internet.domain.useCase.InternetConnectivityUseCase
 import com.robstore.features.authentication.login.di.AppModule.tokenRepository
 import com.robstore.features.authentication.login.domain.useCase.LoginUseCase
@@ -128,7 +129,7 @@ class LoginViewModel(
 
 
 
-    fun validateCredentials() {
+    suspend fun validateCredentials() {
         val email = emailInputText.value
         val password = password.value
 
@@ -146,9 +147,11 @@ class LoginViewModel(
             return
         }
 
+        val fireToken = dataStoreManager.getKey(PreferenceKeys.TOKEN_MYFIREBASE).first()
+
         viewModelScope.launch {
             _loginUiState.value = GeneralUiState.Loading
-            val result = loginUseCase(email, password)
+            val result = loginUseCase(email, password, fireToken.toString())
 
             result.onSuccess { data ->
                 dataStoreManager.saveUserInformation(
@@ -160,7 +163,7 @@ class LoginViewModel(
                 _emailValidationState.value = EmailValidationState.Valid
                 _passwordValidationState.value = PasswordValidationState.Valid
                 Log.d(
-                    "LoginViewModel", "Login exitoso para $email. Token guardado por el Repositorio."
+                    "LoginViewModel", "Login exitoso para $email. Token guardado por el Repositorio $fireToken."
                 )
                 _loginUiState.value = GeneralUiState.Success
 
@@ -195,7 +198,7 @@ class LoginViewModel(
     fun clearCredentials() {
         _emailInputText.value = ""
         _emailValidationState.value = null
-        hasEmailBeenFocused = false // Restablece también esta bandera si la usas para la validación
+        hasEmailBeenFocused = false
 
         _password.value = ""
         _passwordValidationState.value = null

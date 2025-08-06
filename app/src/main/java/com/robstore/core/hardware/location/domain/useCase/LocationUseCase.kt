@@ -12,4 +12,8 @@ class LocationUseCase(private val locationRepository: LocationRepository) {
             Result.failure(locationResult.exceptionOrNull() ?: Exception("No se pudo obtener la ubicación."))
         }
     }
+
+    suspend fun getLatLng(): Result<Pair<Double, Double>> {
+        return locationRepository.getLatLng()
+    }
 }

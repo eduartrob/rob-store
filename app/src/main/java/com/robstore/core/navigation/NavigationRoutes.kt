@@ -5,4 +5,5 @@ object NavigationRoutes {
     const val REGISTER = "register"
     const val RecPasswd = "recoveryPasswd"
     const val HOME = "home"
+    const val WEATHER = "weather"
 }

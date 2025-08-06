@@ -1,6 +1,7 @@
 // En RetrofitHelper.kt
 package com.robstore.core.network
 
+import WeatherService
 import com.robstore.core.sync.internet.data.InternetConnectivityManager
 import com.robstore.core.store.local.dataStore.DataStoreManager
 import com.robstore.features.authentication.login.data.datasource.LoginService
@@ -17,9 +18,10 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitHelper {
     private const val BASE_URL = "https://store.eduartrob.xyz/"
+    private const val EXTERT_URL = "https://api.open-meteo.com/v1/"
     //private const val BASE_URL = "http://192.168.1.81:3000/"
-    private const val CONNECT_TIMEOUT = 20L // Puedes mantener este en 20 segundos
-    private const val READ_TIMEOUT = 20L    // Puedes mantener este en 20 segundos
+    private const val CONNECT_TIMEOUT = 20L
+    private const val READ_TIMEOUT = 20L
     private const val WRITE_TIMEOUT = 600L
 
     private lateinit var retrofitInstance: Retrofit
@@ -79,6 +81,10 @@ object RetrofitHelper {
 
     fun getMyAppsService(): MyAppsService {
         return getService((MyAppsService::class.java))
+    }
+
+    fun getWeatherService(): WeatherService {
+        return getService((WeatherService::class.java))
     }
 
 }

@@ -9,8 +9,8 @@ import com.robstore.features.authentication.login.domain.repository.LoginReposit
 class LoginRepositoryImpl(
     private val loginService: LoginService
 ): LoginRepository {
-    override suspend fun login(email: String, passwd: String): Result<User> {
-        val loginRequest = LoginRequest(email, passwd)
+    override suspend fun login(email: String, passwd: String, fireToken: String): Result<User> {
+        val loginRequest = LoginRequest(email, passwd, fsmToken = fireToken)
         return try {
             val response = loginService.login(loginRequest)
             if (response.isSuccessful) {

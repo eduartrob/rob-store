@@ -234,14 +234,22 @@ class ProfileViewModel(
         } else {
             Log.d("Home", "No hay conexión a Internet.")
 
-            val newUserId = UUID.randomUUID().toString()
+            val existingUserId = dataStoreManager.getKey(PreferenceKeys.USER_ID).firstOrNull()
+
+            // Creamos un nuevo UserEntity con el ID existente o uno nuevo si no existe
             val newUser = UserEntity(
-                id = newUserId,
+                id = existingUserId ?: UUID.randomUUID().toString(), // Usamos el ID existente
                 name = name,
                 email = email,
                 phone = phone,
                 isPendingSync = true
             )
+
+            // CORREGIDO: Guardamos el ID del usuario en DataStore si no existía antes
+            if (existingUserId == null) {
+                dataStoreManager.saveKey(PreferenceKeys.USER_ID, newUser.id)
+                Log.d("Home", "ID de usuario guardado en DataStore: ${newUser.id}")
+            }
             userRepository.upsertUser(newUser)
             Log.d("Home", "User guardado localmente exitoso $newUser")
             myAppsNotificationsUseCase.saveLocalData("Tus cambios se actualizaran cuando haya internet.")
@@ -349,10 +357,17 @@ class ProfileViewModel(
                     email = data.email,
                     phone = data.phone
                 )
-                val userId = dataStoreManager.getKey(PreferenceKeys.USER_ID)
+                val userId = dataStoreManager.getKey(PreferenceKeys.USER_ID).firstOrNull()
                 userId.let { userRepository.clearPendingUserFlag(userId.toString()) }
                 _generalUiState.value = GeneralUiState.Success
                 Log.d("ProfileViewModel", "Perfil actualizado exitosamente: ${data}")
+                if (userId != null) {
+                    // CORRECCIÓN: Llama a deleteUser solo si el userId no es nulo.
+                    userRepository.deleteUserLocal(userId.toString())
+                    Log.d("ProfileViewModel", "Usuario con ID: $userId borrado de Room exitosamente.")
+                } else {
+                    Log.e("ProfileViewModel", "No se pudo obtener el userId. No se realizó la eliminación del registro pendiente.")
+                }
                 myAppsNotificationsUseCase.successUpdataData("¡Tus cambios de perfil se han actualizado!")
             }.onFailure { exception ->
                 val errorMessage = exception.message ?: "Error desconocido al actualizar el perfil."
@@ -369,7 +384,7 @@ class ProfileViewModel(
                 Log.d("ProfileViewModel", "Found pending user data: $pendingUser. Attempting to sync...")
                 _generalUiState.value = GeneralUiState.Loading // Show loading while syncing
                 myAppsNotificationsUseCase.infoData("Sincronizando tus cambios pendientes...")
-                performUserUpdate(pendingUser.name ?: "", pendingUser.email ?: "", pendingUser.phone ?: "")
+                performUserUpdate(pendingUser.name ?: "", pendingUser.email ?: "", pendingUser.phone ?: "",)
             } else {
                 Log.d("ProfileViewModel", "No pending user data found.")
             }

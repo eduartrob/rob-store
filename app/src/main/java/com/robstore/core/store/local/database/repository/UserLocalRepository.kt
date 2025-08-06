@@ -18,4 +18,8 @@ class UserRepository(
     suspend fun clearPendingUserFlag(userId: String) {
         userDao.clearPendingUserFlag(userId)
     }
+
+    suspend fun deleteUserLocal(userId: String){
+        userDao.deleteUser(userId)
+    }
 }

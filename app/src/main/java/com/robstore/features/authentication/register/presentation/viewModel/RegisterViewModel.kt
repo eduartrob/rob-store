@@ -10,6 +10,7 @@ import com.robstore.core.common.PasswordValidationState
 import com.robstore.core.common.NameValidationState
 import com.robstore.core.common.PhoneValidationState
 import com.robstore.core.store.local.dataStore.DataStoreManager
+import com.robstore.core.store.local.dataStore.PreferenceKeys
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -201,9 +202,11 @@ class RegisterViewModel(
             return
         }
 
+        val fireToken = dataStoreManager.getKey(PreferenceKeys.TOKEN_MYFIREBASE)
+
         viewModelScope.launch {
             _generalUiState.value = GeneralUiState.Loading
-            val result = registerUseCase(name, email, password, phone)
+            val result = registerUseCase(name, email, password, phone, fireToken.toString())
 
             result.onSuccess { data ->
                 _nameValidationState.value = NameValidationState.Valid

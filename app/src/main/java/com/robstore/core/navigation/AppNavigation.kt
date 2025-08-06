@@ -1,5 +1,6 @@
 package com.robstore.core.navigation
 
+import WeatherScreen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,9 @@ import com.robstore.features.myApps.presentation.viewModel.MyAppsViewModelFactor
 import com.robstore.features.profile.di.UpdateUserAppModule
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModel
 import com.robstore.features.profile.presentation.viewModel.ProfileViewModelFactory
+import com.robstore.features.weather.di.WeatherAppModule
+import com.robstore.features.weather.presentation.viewModel.WeatherViewModel
+import com.robstore.features.weather.presentation.viewModel.WeatherViewModelFactory
 
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -84,6 +88,16 @@ fun AppNavigation(
     val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
 
 
+
+    val weatherViewModelFactory = remember {
+        WeatherViewModelFactory(
+            LoginAppModule.getLocationUseCase(),
+            weatherUseCase = WeatherAppModule.WeatherAppModule.getWeatherUseCase(),
+        )
+    }
+    val weatherViewModel: WeatherViewModel = viewModel(factory = weatherViewModelFactory)
+
+
     val myAppsViewModelFactory = remember {
         MyAppsViewModelFactory(
             MyAppsModule.myAppsUseCase,
@@ -103,39 +117,30 @@ fun AppNavigation(
     )}
     val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
 
-    // Este LaunchedEffect es el que debe manejar la navegación de logout
     LaunchedEffect(Unit) {
         profileViewModel.navigateToLoginEvent.collect {
-            // Navega a LOGIN y limpia TODO el back stack.
-            // Esta es la forma más agresiva y fiable de manejar la navegación de logout.
             navController.navigate(NavigationRoutes.LOGIN) {
-                // popUpTo(navController.graph.id) { inclusive = true }
-                // Usar navController.graph.startDestinationId es más explícito para la raíz del grafo
                 popUpTo(navController.graph.startDestinationId) {
-                    inclusive = true // Incluye la propia startDestination en la eliminación
+                    inclusive = true
                 }
-                // Asegura que solo haya una instancia de la pantalla de login en el stack.
                 launchSingleTop = true
             }
         }
     }
 
 
-    // Solo construye el NavHost si el destino inicial ya ha sido cargado
     if (!isInitialDestinationLoaded) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator() // Muestra un indicador de carga
+            CircularProgressIndicator()
         }
     } else {
         NavHost(
             modifier = Modifier.systemBarsPadding() ,
             navController = navController,
-            // Aquí, la startDestination se establece una vez al inicio.
-            // La navegación de logout se manejará por el LaunchedEffect de arriba.
             startDestination = when (initialDestination) {
                 "home" -> NavigationRoutes.HOME
                 "login" -> NavigationRoutes.LOGIN
-                else -> NavigationRoutes.LOGIN // Fallback, aunque con isInitialDestinationLoaded no debería ser ""
+                else -> NavigationRoutes.LOGIN
             }
         ) {
             composable(NavigationRoutes.LOGIN) {
@@ -168,6 +173,19 @@ fun AppNavigation(
                     recoveryPasswdViewModel = recoveryPasswdViewModel,
                 )
             }
+
+
+            composable(NavigationRoutes.WEATHER) {
+                WeatherScreen(
+                    weatherViewModel = weatherViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+
+
             composable(NavigationRoutes.HOME) {
                 Home(
                     onNavigateToLogin = {
@@ -175,6 +193,7 @@ fun AppNavigation(
                             popUpTo(NavigationRoutes.HOME) { inclusive = true }
                         }
                     },
+                    onNavigateToWeather = { navController.navigate(NavigationRoutes.WEATHER) },
                     homeViewModel = homeViewModel,
                     profileViewModel = profileViewModel,
                     myAppsViewModel = myAppsViewModel,

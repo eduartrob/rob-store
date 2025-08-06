@@ -77,4 +77,17 @@ class LocationManager(private val context: Context) : LocationRepository {
             Result.failure(Exception("Error al determinar la región: ${e.message}"))
         }
     }
+
+    @SuppressLint("MissingPermission")
+    override suspend fun getLatLng(): Result<Pair<Double, Double>> {
+        val locationResult = getLastLocation()
+
+        return if (locationResult.isSuccess) {
+            val location = locationResult.getOrThrow()
+            val latLng = Pair(location.latitude, location.longitude)
+            Result.success(latLng)
+        } else {
+            Result.failure(locationResult.exceptionOrNull() ?: Exception("Error desconocido"))
+        }
+    }
 }

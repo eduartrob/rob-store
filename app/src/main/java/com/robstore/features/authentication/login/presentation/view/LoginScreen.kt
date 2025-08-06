@@ -56,6 +56,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.ImeAction
@@ -67,7 +68,10 @@ import com.robstore.core.common.GeneralUiState
 import com.robstore.core.common.PasswordValidationState
 import com.robstore.features.authentication.login.di.AppModule
 import com.robstore.features.authentication.login.presentation.viewModel.LoginViewModel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
 
 
 @Composable
@@ -77,6 +81,8 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToRecoveryPasswd: () -> Unit,
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     val email: String by loginViewModel.emailInputText.collectAsState()
     val emailValidationState by loginViewModel.emailValidationState.collectAsState()
 
@@ -273,7 +279,11 @@ fun LoginScreen(
                 }
 
                 Button(
-                    onClick = { loginViewModel.validateCredentials() },
+                    onClick = {
+                        coroutineScope.launch{
+                            loginViewModel.validateCredentials()
+                        }
+                    },
                     enabled = uiState !is GeneralUiState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
